@@ -15,12 +15,14 @@ clean:
 	rm -f *.o *.c $(EXE)
 
 test: $(EXE)
+	@rm -f core.*
 	./$(EXE) --verbose --debug graph --width 600 --height 300
 
 preload.c: $(VALACSRC)
 	grep -Eh "GType rrd_(command|rpn)_.*_get_type" *.c \
 	| sed "s/{/;/" \
-	| awk '{C[$$2]=$$0;}END{print "#include <glib.h>";print "#include <glib-object.h>";for(i in C) {print "extern",C[i];}print "static void __attribute__((constructor)) init_lib(void) {";for(i in C) {print i"();";};print "}";}' \
+	| sort -u \
+	| awk '{C[$$2]=$$0;}END{print "#include <glib.h>";print "#include <glib-object.h>";for(i in C) {print "extern",C[i];}print "static void __attribute__((constructor)) init_lib(void) {";print "  g_type_init();";print "  GType t;";for(i in C) {print "  t = "i" ();";};print "}";}' \
 	> $@
 
 $(EXE): $(OBJ)

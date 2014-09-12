@@ -97,7 +97,6 @@ class rrd_command : GLib.Object {
     return false;
   }
 
-
   public static rrd_command? factory(ArrayList<string> args) {
     /* parsing of common options*/
     var self=new rrd_command(args);
@@ -114,6 +113,9 @@ class rrd_command : GLib.Object {
 
     /* so now try to get its class info */
     Type class_type=Type.from_name(class_name);
+
+stderr.printf("XXX %s\n",class_type.name());
+
     /* check that it is an object */
     if (!class_type.is_object()) {
       stdout.printf("ERROR: Could not find command %s\n",command);

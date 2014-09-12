@@ -5,8 +5,6 @@ class rrdtool {
 
   public static int main(string[] sysargs)
   {
-    /* need to load these explicitly as of now - we need to get those classes registered */
-    new rrd_command_graph();
 
     /* move to arg */
     var args=new ArrayList<string>();
@@ -16,7 +14,9 @@ class rrdtool {
     rrd_command cmd = rrd_command.factory(args);
 
     /* now execute it */
-    cmd.execute();
+    if (cmd != null) {
+      cmd.execute();
+    }
 
     /* and work with it */
     //foreach(var arg in args) { stdout.printf("main: arg: %s\n",arg); }
