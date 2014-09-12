@@ -137,7 +137,7 @@ class rrd_command : GLib.Object {
     /* initialize with the common args already found and the parsed ones */
     cmdclass.init(self,args);
 
-    return self;
+    return cmdclass;
   }
 
 }
