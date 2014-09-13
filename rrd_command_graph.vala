@@ -46,19 +46,6 @@ class rrd_command_graph : rrd_command {
 	protected override OptionEntry[]? getCommandOptions()
 	{ return COMMAND_OPTIONS; }
 
-	/* the positional Argument Parser */
-	protected override  void
-		parsePositionalArguments(ArrayList<string> args)
-	{
-		foreach(var arg in parsed_args) {
-			stdout.printf("rrd_command_graph.parsed_args=%s=%s\n",
-				arg.key,arg.value);
-		}
-		foreach(var arg in args) {
-			stdout.printf("rrd_command_graph.args=%s\n",arg);
-		}
-	}
-
 	/* the execution method */
 	public override bool execute() {
 		stdout.printf("rrd_command_graph.execute()\n");

@@ -6,12 +6,8 @@ class rrdtool {
 	public static int main(string[] sysargs)
 	{
 
-		/* move to arg */
-		var args=new ArrayList<string>();
-		foreach(var arg in sysargs) { args.add(arg); }
-
 		/* now create the command we shall use */
-		rrd_command cmd = rrd_command.factory(args);
+		rrd_command cmd = rrd_command.factorySysArgs(sysargs);
 
 		/* now execute it */
 		if (cmd != null) {

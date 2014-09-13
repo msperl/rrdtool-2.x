@@ -16,8 +16,9 @@ clean:
 
 test: $(EXE)
 	@rm -f core.*
-	./$(EXE) --verbose --debug graph --width 600 --height 300
+	./$(EXE) --verbose --debug graph --width 600 --height 300 xxx:\:aa
 
+# we may avoid this by using TypeModule
 preload.c: $(VALACSRC)
 	grep -Eh "GType rrd_(command|rpn)_.*_get_type" rrd_*.c \
 	| sed "s/{/;/" \

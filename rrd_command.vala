@@ -11,10 +11,10 @@ class rrd_command : GLib.Object {
 		/* format: long option, short option char, flags, argstype,
 		 * argdata,description,arg_description)
 		 */
-		{ "debug",'d',OptionFlags.NO_ARG,OptionArg.CALLBACK,
-		  (void *)optionCallback,"debug",""},
-		{ "verbose",'v',OptionFlags.NO_ARG,OptionArg.CALLBACK,
-		  (void *)optionIncreaseCallback,"verbose",""},
+		{ "debug", 'd', OptionFlags.NO_ARG, OptionArg.CALLBACK,
+		  (void *)optionCallback, "debug", ""},
+		{ "verbose", 'v', OptionFlags.NO_ARG, OptionArg.CALLBACK,
+		  (void *)optionIncreaseCallback, "verbose",""},
 		{ null }
 	};
 
@@ -26,7 +26,15 @@ class rrd_command : GLib.Object {
 	protected virtual void
 		parsePositionalArguments(ArrayList<string> args)
 	{
-		;
+
+		foreach(var arg in parsed_args) {
+			stdout.printf("rrd_command_graph.parsed_args=%s=%s\n",
+				arg.key,arg.value);
+		}
+		foreach(var arg in args) {
+			stdout.printf("rrd_command_graph.args=%s\n",arg);
+			rrd_argument.factory(this,arg);
+		}
 	}
 
 	/* common method to get the "complete" name */
@@ -36,11 +44,11 @@ class rrd_command : GLib.Object {
 		 * but that is the way that GOptions works...
 		 */
 		/* if we have the long name, then use it */
-		if(name.substring(0,2)=="--") {
+		if(name.substring(0,2) == "--") {
 			return name.substring(2,-1);
 		}
 		/* else we need to translate shorts to long names */
-		string short_name=name.substring(1,1);
+		string short_name = name.substring(1,1);
 		/* transform short name to long name */
 		foreach(var option in COMMON_OPTIONS) {
 			if (option.short_name.to_string() == short_name) {
@@ -48,8 +56,8 @@ class rrd_command : GLib.Object {
 			}
 		}
 		/* now try the specific names */
-		var command_options=getCommandOptions();
-		if (command_options!=null) {
+		var command_options = getCommandOptions();
+		if (command_options != null) {
 			foreach(var option in command_options) {
 				if (option.short_name.to_string()
 					== short_name) {
@@ -70,7 +78,7 @@ class rrd_command : GLib.Object {
 		throws OptionError
 	{
 		/* translate name */
-		var n=data.getLongNameFromArg(name);
+		var n = data.getLongNameFromArg(name);
 		/* set in array */
 		data.parsed_args.set(n,val ?? "1");
 		/* return OK */
@@ -86,11 +94,11 @@ class rrd_command : GLib.Object {
 		throws OptionError
 	{
 		/* translate name */
-		var n=data.getLongNameFromArg(name);
+		var n = data.getLongNameFromArg(name);
 		/* now get the old value */
-		int v=0;
+		int v = 0;
 		if (data.parsed_args.has_key(n)) {
-			v=data.parsed_args.get(n).to_int();
+			v = data.parsed_args.get(n).to_int();
 		}
 		/* and set the incremented version */
 		data.parsed_args.set(n,"%d".printf(v+1));
@@ -99,17 +107,17 @@ class rrd_command : GLib.Object {
 	}
 
 	/* the constructor */
-	public rrd_command(ArrayList<string>? args=null,
-			bool ignore_ukn=false,
-			bool help_en=true)
+	public rrd_command(ArrayList<string>? args = null,
+			bool ignore_ukn = false,
+			bool help_en = true)
 	{
 		parseArgs(args,ignore_ukn,help_en);
 	}
 
 	/* the constructor using arguments - public only with subclasses */
 	protected void parseArgs(ArrayList<string>? args,
-				bool ignore_ukn=false,
-				bool help_en=true)
+				bool ignore_ukn = false,
+				bool help_en = true)
 	{
 		/* if the args are null, then return */
 		if (args == null) {
@@ -120,25 +128,28 @@ class rrd_command : GLib.Object {
 		 * to GOption, otherwise we lose the resizes on
 		 * function return
 		 */
-		string[] args_array=new string[args.size];
-		int i=0; foreach(var arg in args) {
-			args_array[i++]=arg;
+		string[] args_array = new string[args.size+1];
+		int i = 0;
+		/* dummy to make OptionContext.parse() happy */
+		args_array[i++] = "rrdtool";
+		foreach(var arg in args) {
+			args_array[i++] = arg;
 		}
 
 		/* allocate the map of parsed args */
-		this.parsed_args=new TreeMap<string,string>();
+		this.parsed_args = new TreeMap<string,string>();
 
 		/* try to parse the args for now */
 		try {
 			/* create main context */
 			var opt_context = new OptionContext (
-				"- rrdtool common");
+				"- rrdtool common arguments");
 			opt_context.set_help_enabled (help_en);
 			opt_context.set_ignore_unknown_options(ignore_ukn);
 			/* create the common context */
 			OptionGroup opt_group_common =
 				new OptionGroup("common",
-						"Common arguments",
+						"round robin database tool",
 						"Common Arguments",
 						this);
 			opt_group_common.add_entries(COMMON_OPTIONS);
@@ -148,12 +159,19 @@ class rrd_command : GLib.Object {
 			 * - overridden by subclass */
 			var command_options = getCommandOptions();
 			if (command_options != null) {
+				/* get the name of the class */
+				var cmdname =
+					this.get_type().name()
+					/* stripping rrd_command_ */
+					.substring(12);
+
 				/* create a option group */
 				OptionGroup opt_group_command =
 					new OptionGroup(
-						"command",
-						"command arguments",
-						"command Arguments",
+						cmdname,
+						cmdname + " arguments",
+						"show " + cmdname
+						+ " Arguments",
 						this);
 				opt_group_command.add_entries(
 					command_options);
@@ -173,6 +191,9 @@ class rrd_command : GLib.Object {
 		args.clear();
 		foreach(var arg in args_array) { args.add(arg); }
 
+		/* and stript the "dummy" command again */
+		args.remove_at(0);
+
 		/* and parse the Positional Arguments */
 		parsePositionalArguments(args);
 	}
@@ -181,6 +202,17 @@ class rrd_command : GLib.Object {
 	{
 		stdout.printf("SHOULD NOT GET HERE\n");
 		return false;
+	}
+
+	public static rrd_command? factorySysArgs(string[] sysargs)
+	{
+		/* move to args as list */
+		var args=new ArrayList<string>();
+		for(int i=1;i<sysargs.length;i++) {
+			args.add(sysargs[i]);
+		}
+		/* and call the "normal" factory */
+		return factory(args);
 	}
 
 	public static rrd_command? factory(ArrayList<string> args)
@@ -205,19 +237,22 @@ class rrd_command : GLib.Object {
 			return null;
 		}
 
-		/* now get the command itself - removing it from the args */
-		string command=args_copy.remove_at(1);
+		/* now get the command itself
+		 * - it is the first positional arg by now */
+		string command = args_copy.remove_at(0);
+
 		/* also remove the string from the final argument list */
 		if (!args.remove(command)) {
 			stdout.printf("could not find %s in argument list"
-				+ " - it should be there!\n",command);
+				+ " - it should be there!\n", command);
 			return null;
 		}
+
 		/* here the full class name we are looking for */
-		string class_name="rrd_command_"+command;
+		string class_name = "rrd_command_" + command;
 
 		/* so now try to get its class type */
-		Type class_type=Type.from_name(class_name);
+		Type class_type = Type.from_name(class_name);
 
 		/* check that it is an object */
 		if (!class_type.is_object()) {
@@ -231,8 +266,8 @@ class rrd_command : GLib.Object {
 		bool is_command=false;
 		for ( Type p = class_type.parent ();
 		      p != 0 ; p = p.parent () ) {
-			if ( p.name()=="rrd_command" ) {
-				is_command=true;
+			if ( p.name() == "rrd_command" ) {
+				is_command = true;
 			}
 		}
 		if (! is_command) {
@@ -243,7 +278,7 @@ class rrd_command : GLib.Object {
 		}
 
 		/* now create the class and initialize it */
-		rrd_command cmdclass=(rrd_command) Object.new(class_type);
+		rrd_command cmdclass = (rrd_command) Object.new(class_type);
 		if ( cmdclass == null ) {
 			stdout.printf("ERROR: error instantiating %s\n",
 				class_name);
@@ -256,5 +291,4 @@ class rrd_command : GLib.Object {
 		/* and return the class */
 		return cmdclass;
 	}
-
 }
