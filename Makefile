@@ -19,15 +19,16 @@ test: $(EXE)
 	./$(EXE) --verbose --debug graph --width 600 --height 300
 
 preload.c: $(VALACSRC)
-	grep -Eh "GType rrd_(command|rpn)_.*_get_type" *.c \
+	grep -Eh "GType rrd_(command|rpn)_.*_get_type" rrd_*.c \
 	| sed "s/{/;/" \
 	| sort -u \
-	| awk '{C[$$2]=$$0;}END{print "#include <glib.h>";print "#include <glib-object.h>";for(i in C) {print "extern",C[i];}print "static void __attribute__((constructor)) init_lib(void) {";print "  g_type_init();";print "  GType t;";for(i in C) {print "  t = "i" ();";};print "}";}' \
+	| awk '{C[$$2]=$$0;}END{print "#include <glib.h>";print "#include <glib-object.h>";for(i in C) {print "extern",C[i];}print "static void __attribute__((constructor)) init_lib(void) {";print "  GType t;";print "  g_type_init();";for(i in C) {print "  t = "i" ();";};print "}";}' \
 	> $@
 
 $(EXE): $(OBJ)
 
 .SECONDARY: $(COBJ)
 
+# this does compile too often - no idea yet how to do it correctly...
 %.c: %.vala
 	$(VALAC) $(VALAFLAGS) -C $(VALASRC)
