@@ -7,7 +7,7 @@ class rrd_command : GLib.Object {
 	protected Map<string,string> parsed_args;
 
 	/* the common arguments */
-	protected const OptionEntry[] common_options = {
+	protected const OptionEntry[] COMMON_OPTIONS = {
 		/* format: long option, short option char, flags, argstype,
 		 * argdata,description,arg_description)
 		 */
@@ -42,7 +42,7 @@ class rrd_command : GLib.Object {
 		/* else we need to translate shorts to long names */
 		string short_name=name.substring(1,1);
 		/* transform short name to long name */
-		foreach(var option in common_options) {
+		foreach(var option in COMMON_OPTIONS) {
 			if (option.short_name.to_string() == short_name) {
 				return option.long_name;
 			}
@@ -116,7 +116,6 @@ class rrd_command : GLib.Object {
 			return;
 		}
 
-		stderr.printf("Parsing args - %s\n",(ignore_ukn)?"true":"false");
 		/* get the args as an array - we need to pass an array
 		 * to GOption, otherwise we lose the resizes on
 		 * function return
@@ -142,14 +141,13 @@ class rrd_command : GLib.Object {
 						"Common arguments",
 						"Common Arguments",
 						this);
-			opt_group_common.add_entries(common_options);
+			opt_group_common.add_entries(COMMON_OPTIONS);
 			/* add it to the context */
 			opt_context.set_main_group((owned)opt_group_common);
 			/* add the command specific options
 			 * - overridden by subclass */
 			var command_options = getCommandOptions();
 			if (command_options != null) {
-				stderr.printf("Custom options\n");
 				/* create a option group */
 				OptionGroup opt_group_command =
 					new OptionGroup(
@@ -162,8 +160,6 @@ class rrd_command : GLib.Object {
 				/* and add it to the context */
 				opt_context.add_group(
 					(owned)opt_group_command);
-			} else {
-				stderr.printf("no Custom options\n");
 			}
 			/* and try to parse everything so far */
 			opt_context.parse(ref args_array);

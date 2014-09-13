@@ -4,7 +4,7 @@ using Gee;
 class rrd_command_graph : rrd_command {
 
 	/* the common arguments */
-	protected const OptionEntry[] command_options = {
+	protected const OptionEntry[] COMMAND_OPTIONS = {
 		/* format: long option, short option char, flags, argstype,
 		 * argdata,description,arg_description)
 		 */
@@ -44,7 +44,7 @@ class rrd_command_graph : rrd_command {
 	};
 
 	protected override OptionEntry[]? getCommandOptions()
-	{ return command_options; }
+	{ return COMMAND_OPTIONS; }
 
 	/* the positional Argument Parser */
 	protected override  void
