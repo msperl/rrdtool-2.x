@@ -2,10 +2,13 @@ using GLib;
 using Gee;
 
 struct rrd_argument_entry {
-	public string name;
-	public bool is_positional;
-	public string? default_value;
-	/* we could also add parsing type here to define the class to use */
+	public unowned string    name;
+	public char              short_name;
+	public rrd_value_type    type;
+	public bool              is_positional;
+	public unowned string?   default_value;
+	public unowned string    description;
+	public unowned string    arg_description;
 }
 
 class rrd_argument : rrd_object {
@@ -25,7 +28,7 @@ class rrd_argument : rrd_object {
 			if ( (str.length == 1)
 				/* case one of trailing escape */
 				&& (str.substring(-1, 1) == "\\") ) {
-				merged+=":"+str.substring(0, str.length-1);
+				merged += str.substring(0, str.length-1)+":";
 			} else if ( (str.length > 1)
 				/* case two of trailing escape
 				 * checking that the escape is not
@@ -34,7 +37,7 @@ class rrd_argument : rrd_object {
 				&& (str.substring(-1, 1) == "\\")
 				&& (str.substring(-2, 1) != "\\\\")
 				) {
-				merged += ":"+str.substring(0,str.length-1);
+				merged += str.substring(0,str.length-2)+":";
 			} else {
 				/* otherwise add to list and empty merged */
 				arglist.add(merged + str);
@@ -229,6 +232,7 @@ class rrd_argument : rrd_object {
 
 	/* by default try to use "name", "vname" or "id" */
 	protected virtual string getPrefixName(
+		rrd_command cmd,
 		TreeMap<string,string> parsed) {
 		var prefix=parsed.get("name");
 		if (prefix != null) { return prefix; }
@@ -236,8 +240,8 @@ class rrd_argument : rrd_object {
 		if (prefix != null) { return prefix; }
 		prefix=parsed.get("id");
 		if (prefix != null) { return prefix; }
-		/* otherwise we need to create a new name */
-		return "";
+		/* otherwise we get the command */
+		return cmd.getNewName(get_type().name());
 	}
 
 	protected virtual bool setCommandContext(
@@ -245,7 +249,7 @@ class rrd_argument : rrd_object {
 		TreeMap<string,string> parsed)
 	{
 		/* get the prefix to use */
-		var prefix=getPrefixName(parsed);
+		var prefix=getPrefixName(command, parsed);
 
 		/* now we need to set it in the command context */
 		foreach(var kv in parsed) {

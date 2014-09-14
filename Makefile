@@ -17,7 +17,8 @@ clean:
 test: $(EXE)
 	@rm -f core.*
 	./$(EXE) --verbose --debug graph --width 600 --height 300 \
-		dEf:test=/tmp/test.rrd:field1:AVG
+		dEf:test=/tmp/test.rrd:field1:AVG \
+		'comment:abc\\:cde'
 
 # we may avoid this by using TypeModule
 preload.c: $(VALACSRC)

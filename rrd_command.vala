@@ -10,23 +10,35 @@ class rrd_command : rrd_object {
 	{
 		parsed_args.set(key,value);
 	}
-	public string getParsedArgument(string key)
-	{ return parsed_args.get(key); }
+	public string? getParsedArgument(string key)
+	{
+		if (parsed_args.has_key(key)) {
+			return parsed_args.get(key);
+		}
+		return null;
+	}
+
+	public string getNewName(string group = "default")
+	{
+		var key = ".unnamed_counter." + group;
+		var count_str = getParsedArgument(key) ?? "0";
+		int count = count_str.to_int();
+
+		count_str="%i".printf(count+1);
+
+		setParsedArgument(key,count_str);
+
+		return group + count_str;
+	}
 
 	/* the common arguments */
-	protected const OptionEntry[] COMMON_OPTIONS = {
-		/* format: long option, short option char, flags, argstype,
-		 * argdata,description,arg_description)
-		 */
-		{ "debug", 'd', OptionFlags.NO_ARG, OptionArg.CALLBACK,
-		  (void *)optionCallback, "debug", ""},
-		{ "verbose", 'v', OptionFlags.NO_ARG, OptionArg.CALLBACK,
-		  (void *)optionIncreaseCallback, "verbose",""},
-		{ null }
+	protected const rrd_argument_entry[] COMMON_ARGUMENT_ENTRIES = {
+		{ "debug",   0,   rrd_value_type.FLAG,  false, "0" },
+		{ "verbose", 'v', rrd_value_type.IFLAG, false, "0" }
 	};
 
 	/* the command options that the implementations have */
-	protected virtual OptionEntry[]? getCommandOptions()
+	protected virtual rrd_argument_entry[]? getCommandOptions()
 	{ return null; }
 
 	/* and the positional Argument Parser */
@@ -56,18 +68,21 @@ class rrd_command : rrd_object {
 		/* else we need to translate shorts to long names */
 		string short_name = name.substring(1,1);
 		/* transform short name to long name */
-		foreach(var option in COMMON_OPTIONS) {
-			if (option.short_name.to_string() == short_name) {
-				return option.long_name;
+		foreach(var option in COMMON_ARGUMENT_ENTRIES) {
+			if (
+				strcmp(option.short_name.to_string(),
+					short_name)==0
+				) {
+				return option.name;
 			}
 		}
 		/* now try the specific names */
 		var command_options = getCommandOptions();
 		if (command_options != null) {
 			foreach(var option in command_options) {
-				if (option.short_name.to_string()
-					== short_name) {
-					return option.long_name;
+				if ( strcmp(option.short_name.to_string(),
+						name) == 0 ) {
+					return option.name;
 				}
 			}
 		}
@@ -120,6 +135,47 @@ class rrd_command : rrd_object {
 		parseArgs(args,ignore_ukn,help_en);
 	}
 
+	protected void add_command_args(OptionGroup group,
+				 rrd_argument_entry[] command_options)
+	{
+		foreach (var co in command_options) {
+			var optentries = new OptionEntry[1];
+			/* copy some stuff */
+			optentries[0].long_name       = co.name;
+			optentries[0].short_name      = co.short_name;
+			optentries[0].description     = co.description;
+			optentries[0].arg_description = co.arg_description;
+			optentries[0].arg             = OptionArg.CALLBACK;
+			/* assume default settings */
+			optentries[0].flags           = 0;
+			optentries[0].arg_data
+				= (void *)optionCallback;
+			/* now based on type do something special */
+			switch (co.type) {
+			case rrd_value_type.STRING:
+			case rrd_value_type.RPN:
+				break;
+			case rrd_value_type.TIMESTRING:
+			case rrd_value_type.VALUE:
+				/* not supported here... */
+				break;
+			case rrd_value_type.IFLAG:
+				optentries[0].arg_data
+					= (void *)optionIncreaseCallback;
+				optentries[0].flags = OptionFlags.NO_ARG;
+				break;
+			case rrd_value_type.FLAG:
+				optentries[0].flags = OptionFlags.NO_ARG;
+				break;
+			default:
+				break;
+			}
+			/* and add the entries */
+			group.add_entries(optentries);
+		}
+	}
+
+
 	/* the constructor using arguments - public only with subclasses */
 	protected bool parseArgs(ArrayList<string>? args,
 				bool ignore_ukn = false,
@@ -143,48 +199,54 @@ class rrd_command : rrd_object {
 		}
 
 		/* allocate the map of parsed args */
-		this.parsed_args = new TreeMap<string,string>();
+		parsed_args = new TreeMap<string,string>();
 
-		/* try to parse the args for now */
-		try {
-			/* create main context */
-			var opt_context = new OptionContext (
-				"- rrdtool common arguments");
-			opt_context.set_help_enabled (help_en);
-			opt_context.set_ignore_unknown_options(ignore_ukn);
-			/* create the common context */
-			OptionGroup opt_group_common =
-				new OptionGroup("common",
-						"round robin database tool",
-						"Common Arguments",
-						this);
-			opt_group_common.add_entries(COMMON_OPTIONS);
-			/* add it to the context */
-			opt_context.set_main_group((owned)opt_group_common);
-			/* add the command specific options
-			 * - overridden by subclass */
-			var command_options = getCommandOptions();
-			if (command_options != null) {
-				/* get the name of the class */
-				var cmdname =
-					this.get_type().name()
-					/* stripping rrd_command_ */
-					.substring(12);
+		/* create main context */
+		var opt_context = new OptionContext (
+			"- rrdtool common arguments");
+		opt_context.set_help_enabled (help_en);
+		opt_context.set_ignore_unknown_options(ignore_ukn);
 
-				/* create a option group */
-				OptionGroup opt_group_command =
-					new OptionGroup(
-						cmdname,
-						cmdname + " arguments",
-						"show " + cmdname
-						+ " Arguments",
-						this);
-				opt_group_command.add_entries(
+		/* create the common context */
+		OptionGroup opt_group_common =
+			new OptionGroup("common",
+					"round robin database tool",
+					"Common Arguments",
+					this);
+
+		/* add entries to group */
+		add_command_args(opt_group_common,
+				COMMON_ARGUMENT_ENTRIES);
+		/* add it to the main context */
+		opt_context.set_main_group((owned)opt_group_common);
+
+		/* add the command specific options
+		 * - overridden by subclass */
+		var command_options = getCommandOptions();
+		if (command_options != null) {
+			/* get the name of the class */
+			var cmdname =
+				this.get_type().name()
+				/* stripping rrd_command_ */
+				.substring(12);
+
+			/* create a option group */
+			OptionGroup opt_group_command =
+				new OptionGroup(
+					cmdname,
+					cmdname + " arguments",
+					"show " + cmdname
+					+ " Arguments",
+					this);
+			/* transform the arguments */
+			add_command_args(opt_group_command,
 					command_options);
-				/* and add it to the context */
-				opt_context.add_group(
-					(owned)opt_group_command);
-			}
+			/* and add it to the context */
+			opt_context.add_group(
+				(owned)opt_group_command);
+		}
+		/* now try to parse */
+		try {
 			/* and try to parse everything so far */
 			opt_context.parse(ref args_array);
 		} catch (OptionError e) {
@@ -238,12 +300,14 @@ class rrd_command : rrd_object {
 		 * common arguments so that we get to the command
 		 * we forget about it immediately
 		 */
-		new rrd_command(args_copy,true,false);
+		var base_cmd = new rrd_command(args_copy,true,false);
+		base_cmd=null; /*just to avoid warnings */
 
 		/* now check if we got a command  */
-		if (args_copy.size <2) {
+		if (args_copy.size <1) {
+			/* check if we got help */
 			stderr.printf("Unexpected length"
-				+ "- need at least 1 arg as command!\n");
+				+ " - need at least 1 arg as command!\n");
 			return null;
 		}
 

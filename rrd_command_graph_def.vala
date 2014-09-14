@@ -4,15 +4,15 @@ using Gee;
 class rrd_command_graph_def : rrd_argument {
 
 	protected const rrd_argument_entry[] DEF_ARGUMENT_ENTRIES = {
-		{ "vname",true,null},
-		{ "rrdfile",true,null},
-		{ "dsname",true,null},
-		{ "cf",true,"AVG"},
-		{ "start",false,"start"},
-		{ "step",false,"step"},
-		{ "end",false,"end"},
-		{ "reduce",false,null},
-		{ "type",false,"rrdfile"},
+		{ "vname",   0, rrd_value_type.STRING, true,  null},
+		{ "rrdfile", 0, rrd_value_type.STRING, true,  null},
+		{ "dsname",  0, rrd_value_type.STRING, true,  null},
+		{ "cf",      0, rrd_value_type.STRING, true,  "AVG"},
+		{ "start",   0, rrd_value_type.RPN,    false, "start"},
+		{ "step",    0, rrd_value_type.RPN,    false, "step"},
+		{ "end",     0, rrd_value_type.RPN,    false, "end"},
+		{ "reduce",  0, rrd_value_type.STRING, false, null},
+		{ "type",    0, rrd_value_type.STRING, false,"rrdfile"},
 		{ null }
 	};
 

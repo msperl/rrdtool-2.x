@@ -3,48 +3,75 @@ using Gee;
 
 class rrd_command_graph : rrd_command {
 
-	/* the common arguments */
-	protected const OptionEntry[] COMMAND_OPTIONS = {
-		/* format: long option, short option char, flags, argstype,
-		 * argdata,description,arg_description)
-		 */
-		{ "width",'w',0,OptionArg.CALLBACK,
-		  (void *)optionCallback,
-		  "width",
-		  ""},
-		{ "height",'h',0,OptionArg.CALLBACK,
-		  (void *)optionCallback,
-		  "height",
-		  ""},
-		{ "start",'s',0,OptionArg.CALLBACK,
-		  (void *)optionCallback,
-		  "start",
-		  ""},
-		{ "step",'S',0,OptionArg.CALLBACK,
-		  (void *)optionIncreaseCallback,
-		  "step",
-		  ""},
-		{ "end",'e',0,OptionArg.CALLBACK,
-		  (void *)optionCallback,
-		  "end",
-		  ""},
-		{ "only-graph",'j',0,OptionArg.CALLBACK,
-		  (void *)optionCallback,
-		  "only-graph",
-		  ""},
-		{ "full-size-mode",'D',0,OptionArg.CALLBACK,
-		  (void *)optionCallback,
-		  "full-size-mode",
-		  ""},
-		{ "title",'t',0,OptionArg.CALLBACK,
-		  (void *)optionCallback,
-		  "title",
-		  ""},
-		{ null }
+	protected const rrd_argument_entry[] COMMAND_ARGUMENT_ENTRIES = {
+		{ "width",
+		  'w',
+		  rrd_value_type.RPN,
+		  false,
+		  "600",
+		  "given width",
+		  "<width in pixel>"
+		},
+		{ "height",
+		  'h',
+		  rrd_value_type.RPN,
+		  false,
+		  "200",
+		  "given height",
+		  "<height in pixel>"
+		},
+		{ "start",
+		  's',
+		  rrd_value_type.TIMESTAMP,
+		  false,
+		  "-1day",
+		  "start time",
+		  "<timestamp>"
+		},
+		{ "step",
+		  'S',
+		  rrd_value_type.RPN,
+		  false,
+		  "300",
+		  "start time",
+		  "<timestamp>"
+		},
+		{ "end",
+		  'e',
+		  rrd_value_type.TIMESTAMP,
+		  false,
+		  "-1day",
+		  "start time",
+		  "<timestamp>"
+		},
+		{ "only-graph",
+		  'j',
+		  rrd_value_type.FLAG,
+		  false,
+		  "0",
+		  "only create the graph",
+		  null
+		},
+		{ "full-size-mode",
+		  'D',
+		  rrd_value_type.FLAG,
+		  false,
+		  "0",
+		  "only create the graph",
+		  null
+		},
+		{ "title",
+		  't',
+		  rrd_value_type.STRING,
+		  false,
+		  null,
+		  "title to print on top of graph",
+		  "<title>"
+		}
 	};
 
-	protected override OptionEntry[]? getCommandOptions()
-	{ return COMMAND_OPTIONS; }
+	protected override rrd_argument_entry[]? getCommandOptions()
+	{ return COMMAND_ARGUMENT_ENTRIES; }
 
 	/* the execution method */
 	public override bool execute() {
