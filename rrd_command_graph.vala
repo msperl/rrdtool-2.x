@@ -49,6 +49,12 @@ class rrd_command_graph : rrd_command {
 	/* the execution method */
 	public override bool execute() {
 		stderr.printf("rrd_command_graph.execute()\n");
+
+		foreach(var kv in parsed_args) {
+			stderr.printf("  Args: %s = %s\n",
+				kv.key,kv.value);
+		}
+
 		return true;
 	}
 
