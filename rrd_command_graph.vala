@@ -48,7 +48,7 @@ class rrd_command_graph : rrd_command {
 
 	/* the execution method */
 	public override bool execute() {
-		stdout.printf("rrd_command_graph.execute()\n");
+		stderr.printf("rrd_command_graph.execute()\n");
 		return true;
 	}
 

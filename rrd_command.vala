@@ -1,10 +1,17 @@
 using GLib;
 using Gee;
 
-class rrd_command : GLib.Object {
+class rrd_command : rrd_object {
 
 	/* the parsed arguments so far */
 	protected Map<string,string> parsed_args;
+
+	public void setParsedArgument(string key, string? value)
+	{
+		parsed_args.set(key,value);
+	}
+	public string getParsedArgument(string key)
+	{ return parsed_args.get(key); }
 
 	/* the common arguments */
 	protected const OptionEntry[] COMMON_OPTIONS = {
@@ -23,18 +30,17 @@ class rrd_command : GLib.Object {
 	{ return null; }
 
 	/* and the positional Argument Parser */
-	protected virtual void
+	protected virtual bool
 		parsePositionalArguments(ArrayList<string> args)
 	{
-
-		foreach(var arg in parsed_args) {
-			stdout.printf("rrd_command_graph.parsed_args=%s=%s\n",
-				arg.key,arg.value);
-		}
+		/* iterate the arguments */
 		foreach(var arg in args) {
-			stdout.printf("rrd_command_graph.args=%s\n",arg);
-			rrd_argument.factory(this,arg);
+			var argclass=rrd_argument.factory(this,arg);
+			if (argclass==null) {
+				return false;
+			}
 		}
+		return true;
 	}
 
 	/* common method to get the "complete" name */
@@ -115,13 +121,13 @@ class rrd_command : GLib.Object {
 	}
 
 	/* the constructor using arguments - public only with subclasses */
-	protected void parseArgs(ArrayList<string>? args,
+	protected bool parseArgs(ArrayList<string>? args,
 				bool ignore_ukn = false,
 				bool help_en = true)
 	{
 		/* if the args are null, then return */
 		if (args == null) {
-			return;
+			return false;
 		}
 
 		/* get the args as an array - we need to pass an array
@@ -182,7 +188,7 @@ class rrd_command : GLib.Object {
 			/* and try to parse everything so far */
 			opt_context.parse(ref args_array);
 		} catch (OptionError e) {
-			stdout.printf ("error: %s\n", e.message);
+			stderr.printf ("error: %s\n", e.message);
 		}
 
 		/* and convert args_array back to args for the caller
@@ -194,13 +200,17 @@ class rrd_command : GLib.Object {
 		/* and stript the "dummy" command again */
 		args.remove_at(0);
 
-		/* and parse the Positional Arguments */
-		parsePositionalArguments(args);
+		/* and parse the Positional Arguments
+		 * if we are NOT of type rrd_command itself */
+		if(strcmp(this.get_type().name(),"rrd_command") != 0) {
+			return parsePositionalArguments(args);
+		}
+		return true;
 	}
 
 	public virtual bool execute()
 	{
-		stdout.printf("SHOULD NOT GET HERE\n");
+		stderr.printf("SHOULD NOT GET HERE\n");
 		return false;
 	}
 
@@ -215,7 +225,7 @@ class rrd_command : GLib.Object {
 		return factory(args);
 	}
 
-	public static rrd_command? factory(ArrayList<string> args)
+	public static new rrd_command? factory(ArrayList<string> args)
 	{
 		/* here we need to create a copy of the ArrayList first,
 		 * as we need to parse/strip the common args first once
@@ -232,63 +242,37 @@ class rrd_command : GLib.Object {
 
 		/* now check if we got a command  */
 		if (args_copy.size <2) {
-			stdout.printf("Unexpected length"
+			stderr.printf("Unexpected length"
 				+ "- need at least 1 arg as command!\n");
 			return null;
 		}
 
-		/* now get the command itself
-		 * - it is the first positional arg by now */
-		string command = args_copy.remove_at(0);
+		/* now get the command itself in lower case
+		 * - it is the first positional arg by now
+		 */
+		string command = args_copy.remove_at(0).down();
 
 		/* also remove the string from the final argument list */
 		if (!args.remove(command)) {
-			stdout.printf("could not find %s in argument list"
+			stderr.printf("could not find %s in argument list"
 				+ " - it should be there!\n", command);
 			return null;
 		}
 
-		/* here the full class name we are looking for */
-		string class_name = "rrd_command_" + command;
+		/* create an object with a predefined name and a subclass */
+		rrd_command cmdclass =
+			(rrd_command) rrd_object.classFactory(
+				"rrd_command_" + command,
+				"rrd_command");
 
-		/* so now try to get its class type */
-		Type class_type = Type.from_name(class_name);
-
-		/* check that it is an object */
-		if (!class_type.is_object()) {
-			stdout.printf("ERROR: Could not find command %s\n",
-				command);
-			return null;
-		}
-
-		/* and check that it is a child of rrd_command
-		 * (not necessarily a direct child) */
-		bool is_command=false;
-		for ( Type p = class_type.parent ();
-		      p != 0 ; p = p.parent () ) {
-			if ( p.name() == "rrd_command" ) {
-				is_command = true;
-			}
-		}
-		if (! is_command) {
-			stdout.printf("ERROR: the found implementation of"
-				+ " %s is not derived from rrd_command\n",
-				class_name);
-			return null;
-		}
-
-		/* now create the class and initialize it */
-		rrd_command cmdclass = (rrd_command) Object.new(class_type);
-		if ( cmdclass == null ) {
-			stdout.printf("ERROR: error instantiating %s\n",
-				class_name);
-			return null;
-		}
 		/* trigger the parser again
 		 * I have not found a means to do that with the above new */
-		cmdclass.parseArgs(args);
+		if (cmdclass!=null) {
+			cmdclass.parseArgs(args);
+		}
 
 		/* and return the class */
 		return cmdclass;
 	}
+
 }

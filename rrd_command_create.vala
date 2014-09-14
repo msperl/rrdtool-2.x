@@ -21,22 +21,9 @@ class rrd_command_create : rrd_command {
 	protected override OptionEntry[]? getCommandOptions()
 	{ return command_options; }
 
-	/* the positional Argument Parser */
-	protected override  void
-		parsePositionalArguments(ArrayList<string> args)
-	{
-		foreach(var arg in parsed_args) {
-			stdout.printf("rrd_command_create.parsed_args=%s=%s\n",
-				arg.key,arg.value);
-		}
-		foreach(var arg in args) {
-			stdout.printf("rrd_command_create.args=%s\n",arg);
-		}
-	}
-
 	/* the execution method */
 	public override bool execute() {
-		stdout.printf("rrd_command_create.execute()\n");
+		stderr.printf("rrd_command_create.execute()\n");
 		return true;
 	}
 
