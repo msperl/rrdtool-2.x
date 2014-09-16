@@ -317,7 +317,7 @@ public class rrd_command : rrd_object {
 		 */
 		rrd_command cmdclass = (rrd_command) classFactory(
 			"rrd_command",
-			"rrd_command",
+			null,
 			"argsList", args_copy
 			);
 
