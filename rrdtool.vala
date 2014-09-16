@@ -1,7 +1,7 @@
 using GLib;
 using Gee;
 
-class rrdtool {
+public class rrdtool {
 
 	public static int main(string[] sysargs)
 	{

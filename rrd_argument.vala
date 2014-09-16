@@ -1,17 +1,51 @@
 using GLib;
 using Gee;
 
-struct rrd_argument_entry {
+public struct rrd_argument_entry {
 	public unowned string    name;
 	public char              short_name;
-	public rrd_value_type    type;
+	public string            class_name;
+	public string            default_value;
 	public bool              is_positional;
-	public unowned string?   default_value;
 	public unowned string    description;
 	public unowned string    arg_description;
 }
 
-class rrd_argument : rrd_object {
+public class rrd_argument : rrd_object {
+        public ArrayList<string> argsList { get; construct; }
+        construct {
+		assert(argsList != null);
+		parseArgs(argsList);
+        }
+
+	private TreeMap<string,rrd_value> parsed_args;
+
+	public bool hasParsedArg(string key)
+	{ return parsed_args.has_key(key); }
+
+	public rrd_value? getParsedArg(string key)
+	{ return parsed_args.get(key); }
+
+	protected bool setParsedArg(string key, string value) {
+		/* create a new class */
+		rrd_value val = getClassForKey(key,value);
+		/* if it is set, then it is in entries */
+		if (val != null) {
+			parsed_args.set(key,val);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void dump() {
+		stderr.printf("%s.dump():\n",get_type().name());
+		foreach(var arg in parsed_args) {
+			stderr.printf("   Parsed arg: %s = %s\n",
+				arg.key,arg.value.to_string());
+		}
+	}
+
 
 	/* our own split_colon method
 	 * that also takes care of escaped colons */
@@ -87,6 +121,7 @@ class rrd_argument : rrd_object {
 				}
 			}
 		}
+
 		/* now that we got everything remove the entries */
 		if (cmdname != null) {
 			split.remove(cmdname_find);
@@ -99,45 +134,53 @@ class rrd_argument : rrd_object {
 		rrd_argument argclass =
 			(rrd_argument) rrd_object.classFactory(
 				base_class + "_" + cmdname,
-				"rrd_argument");
-		if (argclass == null) {
-			stderr.printf("ARG: %s\n",cmdname);
-			return null;
-		}
-		/* now parse the arguments received in full */
-		if (!argclass.parseArgs(command,split)) {
-			return null;
-		}
+				"rrd_argument",
+				"argsList",split);
 
 		return argclass;
 	}
 
 	protected const rrd_argument_entry[] DEFAULT_ARGUMENT_ENTRIES =
-		{ { null } };
+		{ };
 
 	protected virtual rrd_argument_entry[] getArgumentEntries()
 	{ return DEFAULT_ARGUMENT_ENTRIES; }
 
 	protected virtual bool modifyParsedArguments(
-		TreeMap<string,string> parsed,
 		ArrayList<string> positional)
 	{ return true; }
 
-	protected bool parseArgs(rrd_command command,
-				ArrayList<string>? arg_list)
-	{
-		/* get the arg info for this class */
-		var entries = getArgumentEntries();
+	public void linkToCommand(rrd_command command) {
+		/* copy debug from global context if it exists
+		 * and we have not set it locally */
+		if (! hasParsedArg("debug")) {
+			var cmd_debug = command.getParsedArgument("debug")
+				?? new rrd_value_flag(false);
+			/* this is an exception */
+			parsed_args.set("debug", cmd_debug);
+		}
 
+		/* now link it in command context
+		 * - mostly for rpn calculations */
+
+		/* get the prefix to use */
+		var prefix=getPrefixName(command);
+
+		/* now set it in the command context
+		 * - this should be a reference */
+		foreach(var kv in parsed_args) {
+			command.setParsedArgument(
+				prefix+"."+kv.key,
+				kv.value);
+		}
+	}
+
+	protected bool parseArgs(ArrayList<string>? arg_list)
+	{
 		/* list of positional=unhandled args */
 		var pos_args = new ArrayList<string>();
-		var parsed_args = new TreeMap<string,string>();
-
-		/* copy debug if it exists */
-		var debug = command.getParsedArgument("debug");
-		if (debug != null) {
-			parsed_args.set("debug",debug);
-		}
+		/* initialize map of keys */
+		parsed_args = new TreeMap<string,rrd_value>();
 
 		/* now parse the args */
 		foreach(var arg in arg_list) {
@@ -150,17 +193,12 @@ class rrd_argument : rrd_object {
 			} else {
 				var key = keyvalue[0];
 				var value = keyvalue[1];
-				if (strcmp(key,"id") == 0) {
-					parsed_args.set(key, value);
-				} else if (strcmp(key,"debug") == 0) {
-					parsed_args.set(key, value);
+				rrd_value val = null;
+				if (strcmp(key,"debug") == 0) {
+					val = new rrd_value_flag(true);
+					parsed_args.set(key,val);
 				} else {
-					if (haveArgumentEntry(
-							entries, key)
-						) {
-						/* and assign it */
-						parsed_args.set(key, value);
-					} else {
+					if (! setParsedArg(key,value)) {
 						pos_args.add(arg);
 					}
 				}
@@ -168,34 +206,44 @@ class rrd_argument : rrd_object {
 		}
 
 		/* do some customized translations
-		 * prior to the default positional parser*/
-		if (! modifyParsedArguments(parsed_args, pos_args) ) {
+		 * prior to the default positional parser
+		 */
+		if (! modifyParsedArguments(pos_args) ) {
 			return false;
 		}
 
 		/* now handle the positional args and also set the defaults */
+		/* get the arg info for this class */
+		var entries = getArgumentEntries();
+
 		foreach(var entry in entries) {
-			if (parsed_args.has_key(entry.name)) {
+			if (hasParsedArg(entry.name)) {
 				/* do nothing */
 			} else if (entry.is_positional) {
 				if (pos_args.size>0) {
-					parsed_args.set(
+					/* create a new class */
+					setParsedArg(
 						entry.name,
 						pos_args.remove_at(0)
 						);
-				} else if (entry.default_value != null) {
-					parsed_args.set(
-						entry.name,
-						entry.default_value);
 				} else {
 					stderr.printf("Positional argument"
 						+ "for %s not given\n",
 						entry.name);
 					return false;
 				}
-			} else if (entry.name!=null) {
-				parsed_args.set(entry.name,
-						entry.default_value);
+			} else {
+				/* set the default */
+				if (entry.default_value!=null) {
+					setParsedArg(
+						entry.name,
+						entry.default_value
+						);
+				} else {
+					stderr.printf("Missing argument"
+						+ "- no default value for %s\n",
+						entry.name);
+				}
 			}
 		}
 
@@ -213,17 +261,9 @@ class rrd_argument : rrd_object {
 			return false;
 		}
 
-		/* now set it in command context */
-		if (! setCommandContext(command, parsed_args)) {
-			return false;
-		}
-
 		/* dump what we have found */
 		if (parsed_args.get("debug")!=null)  {
-			foreach(var arg in parsed_args) {
-				stderr.printf("   Parsed arg: %s = %s\n",
-					arg.key,arg.value);
-			}
+			dump();
 		}
 
 		/* and return OK */
@@ -232,30 +272,18 @@ class rrd_argument : rrd_object {
 
 	/* by default try to use "name", "vname" or "id" */
 	protected virtual string getPrefixName(
-		rrd_command cmd,
-		TreeMap<string,string> parsed) {
-		var prefix=parsed.get("name");
-		if (prefix != null) { return prefix; }
-		prefix=parsed.get("vname");
-		if (prefix != null) { return prefix; }
-		prefix=parsed.get("id");
-		if (prefix != null) { return prefix; }
-		/* otherwise we get the command */
-		return cmd.getNewName(get_type().name());
-	}
-
-	protected virtual bool setCommandContext(
-		rrd_command command,
-		TreeMap<string,string> parsed)
-	{
-		/* get the prefix to use */
-		var prefix=getPrefixName(command, parsed);
-
-		/* now we need to set it in the command context */
-		foreach(var kv in parsed) {
-			command.setParsedArgument(prefix+"."+kv.key,kv.value);
+		rrd_command cmd) {
+		/* some defaults to minimize coding */
+		if (hasParsedArg("name")) {
+			return getParsedArg("name").to_string();
+		} else if (hasParsedArg("vname")) {
+			return getParsedArg("vname").to_string();
+		} else if (hasParsedArg("id")) {
+			return getParsedArg("id").to_string();
+		} else {
+			/* otherwise we get the generated version */
+			return cmd.getNewName(get_type().name());
 		}
-		return true;
 	}
 
 	protected bool haveArgumentEntry(
@@ -267,5 +295,34 @@ class rrd_argument : rrd_object {
 			}
 		}
 		return false;
+	}
+
+	protected rrd_argument_entry? getArgumentEntry(string name)
+	{
+		/* get the arg info for this class */
+		var entries = getArgumentEntries();
+		/* iterate to find */
+		foreach(var ae in entries) {
+			if (strcmp(ae.name,name)==0) {
+				return ae;
+			}
+		}
+		/* return empty */
+		return null;
+	}
+
+	protected rrd_value? getClassForKey(
+		string name, string value)
+	{
+		/* get the argument entry */
+		var ae = getArgumentEntry(name);
+		if (ae == null) {
+			return null;
+		}
+		/* now use the class factory */
+		var obj = rrd_value.factory(
+			ae.class_name,
+			value);
+		return obj;
 	}
 }

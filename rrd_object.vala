@@ -1,29 +1,47 @@
 using GLib;
 using Gee;
 
-class rrd_object : GLib.Object {
+public class rrd_object : GLib.Object {
+
 	public static rrd_object? classFactory(
-		string class_name, string subclassof,...)
+		string class_name, string? subclassof,
+		string? key=null, void* value=null)
 	{
 		/* so now try to get its class type */
 		Type class_type = getTypeOfClassWithParent(
 			class_name,subclassof);
+		/* use the generic factory */
+		return classFactoryByType(class_type,key,value);
+	}
 
-		/* and check that it is a child of subclassof
-		 * (not necessarily a direct child) */
-		if (class_type == Type.INVALID) {
-			stderr.printf("ERROR: the found implementation of"
-				+ " %s is not derived from %s\n",
-				class_name,subclassof);
-			return null;
+	public static rrd_object? classFactoryByType(
+		Type class_type,
+		string? key=null, void* value=null,
+		string? key2=null, void* value2=null
+		)
+	{
+		assert(class_type != Type.INVALID);
+		/* now create the class and initialize it
+		 * there may be an easier way, but probably
+		 * not with vala for RH6
+		 */
+		rrd_object obj;
+		if (key2 != null) {
+			obj = (rrd_object) Object.new(
+				class_type,
+				key, value,
+				key2, value2);
+		} else if (key != null) {
+			obj = (rrd_object) Object.new(
+				class_type,
+				key,value);
+		} else {
+			obj = (rrd_object) Object.new(
+				class_type);
 		}
-
-		/* now create the class and initialize it */
-		rrd_object obj =
-			(rrd_object) Object.new(class_type);
 		if ( obj == null ) {
 			stderr.printf("ERROR: error instantiating %s\n",
-				class_name);
+				class_type.name());
 			return null;
 		}
 
@@ -31,8 +49,8 @@ class rrd_object : GLib.Object {
 
 	}
 
-	static Type getTypeOfClassWithParent(
-		string class_name, string subclassof)
+	public static Type getTypeOfClassWithParent(
+		string class_name, string? subclassof)
 	{
 		/* get the type from the name */
 		Type class_type = Type.from_name(class_name);
@@ -42,6 +60,10 @@ class rrd_object : GLib.Object {
 			stderr.printf("ERROR: Could not find class_name %s\n",
 				class_name);
 			return Type.INVALID;
+		}
+
+		if (subclassof == null) {
+			return class_type;
 		}
 
 		/* and now check ancestors */

@@ -22,7 +22,7 @@ test: $(EXE)
 
 # we may avoid this by using TypeModule
 preload.c: $(VALACSRC)
-	grep -Eh "GType rrd_(command|rpn)_.*_get_type" rrd_*.c \
+	grep -Eh "GType rrd_(command|value)_.*_get_type" rrd_*.c \
 	| sed "s/{/;/" \
 	| sort -u \
 	| awk '{C[$$2]=$$0;}END{print "#include <glib.h>";print "#include <glib-object.h>";for(i in C) {print "extern",C[i];}print "static void __attribute__((constructor)) init_lib(void) {";print "  GType t;";print "  g_type_init();";for(i in C) {print "  t = "i" ();";};print "}";}' \

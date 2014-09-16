@@ -1,25 +1,30 @@
 using GLib;
 using Gee;
 
-class rrd_command_create : rrd_command {
+public class rrd_command_create : rrd_command {
 
 	/* the command arguments */
-	protected const OptionEntry[] command_options = {
-		/* format: long option, short option char, flags, argstype,
-		 * argdata,description,arg_description)
-		 */
-		{ "start",'b',0,OptionArg.CALLBACK,
-		  (void *)optionCallback,
-		  "start",
-		  ""},
-		{ "step",'s',0,OptionArg.CALLBACK,
-		  (void *)optionIncreaseCallback,
-		  "step",
-		  ""},
-		{ null }
+	protected const rrd_argument_entry[] COMMAND_ARGUMENT_ENTRIES = {
+		{ "start",
+		  's',
+		  "rrd_value_timestamp",
+		  "-1day",
+		  false,
+		  "start time",
+		  "<timestamp>"
+		},
+		{ "step",
+		  'S',
+		  "rrd_value_rpn",
+		  "end,start,-,width,/",
+		  false,
+		  "step time",
+		  "<seconds>"
+		}
 	};
-	protected override OptionEntry[]? getCommandOptions()
-	{ return command_options; }
+
+	protected override rrd_argument_entry[]? getCommandOptions()
+	{ return COMMAND_ARGUMENT_ENTRIES; }
 
 	/* the execution method */
 	public override bool execute() {

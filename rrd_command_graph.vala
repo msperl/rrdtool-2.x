@@ -1,70 +1,68 @@
 using GLib;
 using Gee;
 
-class rrd_command_graph : rrd_command {
+public class rrd_command_graph : rrd_command {
 
 	protected const rrd_argument_entry[] COMMAND_ARGUMENT_ENTRIES = {
 		{ "width",
 		  'w',
-		  rrd_value_type.RPN,
-		  false,
+		  "rrd_value_rpn",
 		  "600",
+		  false,
 		  "given width",
 		  "<width in pixel>"
 		},
 		{ "height",
 		  'h',
-		  rrd_value_type.RPN,
-		  false,
+		  "rrd_value_rpn",
 		  "200",
+		  false,
 		  "given height",
 		  "<height in pixel>"
 		},
 		{ "start",
 		  's',
-		  rrd_value_type.TIMESTAMP,
-		  false,
+		  "rrd_value_timestamp",
 		  "-1day",
+		  false,
 		  "start time",
 		  "<timestamp>"
 		},
 		{ "step",
 		  'S',
-		  rrd_value_type.RPN,
+		  "rrd_value_rpn",
+		  "end,start,-,width,/",
 		  false,
-		  "300",
-		  "start time",
-		  "<timestamp>"
+		  "step time",
+		  "<seconds>"
 		},
 		{ "end",
 		  'e',
-		  rrd_value_type.TIMESTAMP,
+		  "rrd_value_timestamp",
+		  "now",
 		  false,
-		  "-1day",
-		  "start time",
+		  "end time",
 		  "<timestamp>"
 		},
 		{ "only-graph",
 		  'j',
-		  rrd_value_type.FLAG,
-		  false,
+		  "rrd_value_flag",
 		  "0",
-		  "only create the graph",
-		  null
+		  false,
+		  "only create the graph"
 		},
 		{ "full-size-mode",
 		  'D',
-		  rrd_value_type.FLAG,
-		  false,
+		  "rrd_value_flag",
 		  "0",
-		  "only create the graph",
-		  null
+		  false,
+		  "do the frame calculation based on global sizes"
 		},
 		{ "title",
 		  't',
-		  rrd_value_type.STRING,
-		  false,
+		  "rrd_value_string",
 		  null,
+		  false,
 		  "title to print on top of graph",
 		  "<title>"
 		}
@@ -76,11 +74,7 @@ class rrd_command_graph : rrd_command {
 	/* the execution method */
 	public override bool execute() {
 		stderr.printf("rrd_command_graph.execute()\n");
-
-		foreach(var kv in parsed_args) {
-			stderr.printf("  Args: %s = %s\n",
-				kv.key,kv.value);
-		}
+		dump();
 
 		return true;
 	}
