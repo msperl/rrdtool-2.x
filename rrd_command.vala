@@ -9,10 +9,6 @@ public class rrd_command : rrd_object {
 		parseArgs(argsList);
 	}
 
-	/* the constructor */
-	public rrd_command(ArrayList<string> args)
-	{ Object(argsList: args); }
-
 	/* the argument objects in sequence */
 	protected ArrayList<rrd_argument> arg_list =
 		new ArrayList<rrd_argument>();
@@ -306,7 +302,7 @@ public class rrd_command : rrd_object {
 		return factory(args);
 	}
 
-	public static new rrd_command? factory(ArrayList<string> args)
+	public static rrd_command? factory(ArrayList<string> args)
 	{
 		/* here we need to create a copy of the ArrayList first,
 		 * as we need to parse/strip the common args first once
@@ -319,8 +315,11 @@ public class rrd_command : rrd_object {
 		 * common arguments so that we get to the command
 		 * we forget about it immediately
 		 */
-		var base_cmd = new rrd_command(args_copy);
-		base_cmd = null; /*just to avoid warnings */
+		rrd_command cmdclass = (rrd_command) classFactory(
+			"rrd_command",
+			"rrd_command",
+			"argsList", args_copy
+			);
 
 		/* now check if we got a command  */
 		if (args_copy.size <1) {
@@ -341,8 +340,10 @@ public class rrd_command : rrd_object {
 			return null;
 		}
 
-		/* create an object with a predefined name and a subclass */
-		rrd_command cmdclass = (rrd_command) classFactory(
+		/* create the final object with a predefined name
+		 * and a subclass
+		 */
+		cmdclass = (rrd_command) classFactory(
 			"rrd_command_" + command,
 			"rrd_command",
 			"argsList", args
