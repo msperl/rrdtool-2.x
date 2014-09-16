@@ -5,21 +5,11 @@ public class rrd_command_create : rrd_command {
 
 	/* the command arguments */
 	protected const rrd_argument_entry[] COMMAND_ARGUMENT_ENTRIES = {
-		{ "start",
-		  's',
-		  "rrd_value_timestamp",
-		  "-1day",
-		  false,
-		  "start time",
-		  "<timestamp>"
+		{ "start", 's', "rrd_value_timestamp", "-1day", false,
+		  "start time", "<timestamp>"
 		},
-		{ "step",
-		  'S',
-		  "rrd_value_rpn",
-		  "end,start,-,width,/",
-		  false,
-		  "step time",
-		  "<seconds>"
+		{ "step", 'S', "rrd_value_rpn", "300", false,
+		  "step time", "<seconds>"
 		}
 	};
 
