@@ -39,7 +39,119 @@ public class rrd_rpnop : rrd_value
 	}
 }
 
-public class rrd_rpnop_obj_obj : rrd_rpnop {
+public abstract class rrd_rpnop_obj : rrd_rpnop {
+	public override rrd_value? getValue(
+		rrd_command cmd,
+		rrd_rpn_stack? stack = null)
+	{
+		/* pop values from stack */
+		var arg = stack.pop();
+		if (arg == null) {
+			stderr.printf("not enough arguments on stack\n");
+			return null;
+		}
+		/* now get the values */
+		var val = arg.getValue(cmd,stack);
+		if (val == null) {
+			return null;
+		}
+		return getValue1(val,cmd,stack);
+	}
+	public abstract rrd_value? getValue1(
+		rrd_value val,
+		rrd_command cmd,
+		rrd_rpn_stack? stack);
+}
+
+public class rrd_rpnop_value : rrd_rpnop_obj {
+
+	public override rrd_value? getValue1(
+		rrd_value val,
+		rrd_command cmd,
+		rrd_rpn_stack? stack)
+	{
+		if (val is rrd_value_number) {
+			return getValue_Number((rrd_value_number) val);
+		} else if (val is rrd_value_timestring) {
+			return getValue_Timestring((rrd_value_timestring) val);
+		}
+
+		return null;
+	}
+
+	public virtual rrd_value?
+		getValue_Number(
+			rrd_value_number val)
+	{
+		stderr.printf(
+			"%s does not implement %s\n",
+			get_type().name(),
+			"getValue_Number_Number");
+		return null;
+	}
+
+	public virtual rrd_value?
+		getValue_Timestring(
+			rrd_value_timestring val)
+	{
+		stderr.printf(
+			"%s does not implement %s\n",
+			get_type().name(),
+			"getValue_Number_Number");
+		return null;
+	}
+}
+
+public class rrd_rpnop_double : rrd_rpnop_value {
+	public virtual double getValue_double(
+		double timestamp,
+		double val) {
+		stderr.printf(
+			"%s does not implement %s\n",
+			get_type().name(),
+			"getValue_double");
+		return val.NAN;
+	}
+
+	public override rrd_value?
+		getValue_Number(
+			rrd_value_number obj)
+	{
+		double val = obj.getDouble();
+		double result = getValue_double(0, val);
+		return new rrd_value_number.double(result);
+	}
+
+	public override rrd_value?
+		getValue_Timestring(
+			rrd_value_timestring obj)
+	{
+		/* get size of resulting timestring */
+		double start=obj.getStart();
+		double step=obj.getStep();
+		double end=obj.getEnd();
+
+		/* create a copy of timestring */
+		var result = new rrd_value_timestring.init_double(
+			start, step, end, null);
+
+		/* get the effective steps */
+		var steps = result.getSteps();
+
+		/* and now run the steps */
+		for(int i=0;i<steps;i++,start+=step) {
+			double val = obj.getData(i);
+			double res = getValue_double(
+				start, val);
+			result.setData(i,res);
+		}
+
+		/* and return it */
+		return result;
+	}
+}
+
+public abstract class rrd_rpnop_obj_obj : rrd_rpnop {
 	public override rrd_value? getValue(
 		rrd_command cmd,
 		rrd_rpn_stack? stack = null)
@@ -66,6 +178,24 @@ public class rrd_rpnop_obj_obj : rrd_rpnop {
 		if (val1 == null) {
 			return null;
 		}
+		return getValue2(val1,val2,cmd,stack);
+	}
+	public abstract rrd_value? getValue2(
+		rrd_value val1,
+		rrd_value val2,
+		rrd_command cmd,
+		rrd_rpn_stack? stack);
+}
+
+public abstract class rrd_rpnop_value_value : rrd_rpnop_obj_obj {
+
+	public override rrd_value? getValue2(
+		rrd_value val1,
+		rrd_value val2,
+		rrd_command cmd,
+		rrd_rpn_stack? stack)
+	{
+
 		/* and check them */
 		/* now depending on the types call different
 		 * implementations */
@@ -157,7 +287,7 @@ public class rrd_rpnop_obj_obj : rrd_rpnop {
 	}
 }
 
-public class rrd_rpnop_double_double : rrd_rpnop_obj_obj {
+public class rrd_rpnop_double_double : rrd_rpnop_value_value {
 
 	public virtual double getValue_double_double(
 		double timestamp,
@@ -284,7 +414,54 @@ public class rrd_rpnop_double_double : rrd_rpnop_obj_obj {
 	}
 }
 
-public abstract class rrd_rpnop_minmaxavg : rrd_rpnop
+public abstract class rrd_rpnop_obj_obj_obj : rrd_rpnop {
+	public override rrd_value? getValue(
+		rrd_command cmd,
+		rrd_rpn_stack? stack = null)
+	{
+		/* pop values from stack */
+		var arg3 = stack.pop();
+		if (arg3 == null) {
+			stderr.printf("not enough arguments on stack\n");
+			return null;
+		}
+		var arg2 = stack.pop();
+		if (arg2 == null) {
+			stderr.printf("not enough arguments on stack\n");
+			return null;
+		}
+		var arg1 = stack.pop();
+		if (arg1 == null) {
+			stderr.printf("not enough arguments on stack\n");
+			return null;
+		}
+
+		/* now get the values */
+		var val3 = arg3.getValue(cmd,stack);
+		if (val3 == null) {
+			return null;
+		}
+
+		var val2 = arg2.getValue(cmd,stack);
+		if (val2 == null) {
+			return null;
+		}
+
+		var val1 = arg1.getValue(cmd,stack);
+		if (val1 == null) {
+			return null;
+		}
+		return getValue3(val1,val2,val3,cmd,stack);
+	}
+	public abstract rrd_value? getValue3(
+		rrd_value val1,
+		rrd_value val2,
+		rrd_value val3,
+		rrd_command cmd,
+		rrd_rpn_stack? stack);
+}
+
+public abstract class rrd_rpnop_one_or_n_plus_one : rrd_rpnop
 {
 	public override rrd_value? getValue(
 		rrd_command cmd,
@@ -307,6 +484,10 @@ public abstract class rrd_rpnop_minmaxavg : rrd_rpnop
 		}
 		/* otherwise get the values - it might be a variable */
 		var val = obj.getValue(cmd,stack);
+		if (val == null) {
+			stderr.printf("unexpected NULL\n");
+			return null;
+		}
 		var t = val.get_type();
 		/* some more checks for an immediate number */
 		if (t.is_a(Type.from_name("rrd_value_number"))) {
@@ -365,178 +546,5 @@ public abstract class rrd_rpnop_minmaxavg : rrd_rpnop
 		}
 		/* return result */
 		return postprocessValue();
-	}
-
-}
-
-public class rrd_rpnop_add : rrd_rpnop_double_double
-{
-	public override double
-		getValue_double_double(
-			double ts,
-			double val1,
-			double val2)
-	{
-		return val1 + val2;
-	}
-}
-
-public class rrd_rpnop_addnan : rrd_rpnop_double_double
-{
-	public override double
-		getValue_double_double(
-			double ts,
-			double val1,
-			double val2)
-	{
-		if ( val1.is_nan() ) {
-			return val2;
-		}
-		if ( val2.is_nan() ) {
-			return val1;
-		}
-		return val1 + val2;
-	}
-}
-
-public class rrd_rpnop_sub : rrd_rpnop_double_double
-{
-	public override double
-		getValue_double_double(
-			double ts,
-			double val1,
-			double val2)
-	{
-		return val1 - val2;
-	}
-}
-
-public class rrd_rpnop_mul : rrd_rpnop_double_double
-{
-	public override double
-		getValue_double_double(
-			double ts,
-			double val1,
-			double val2)
-	{
-		return val1 * val2;
-	}
-}
-
-public class rrd_rpnop_div : rrd_rpnop_double_double
-{
-	public override double
-		getValue_double_double(
-			double ts,
-			double val1,
-			double val2)
-	{
-		/* some boundry case checks
-		 * not sure if other/different checks are needed
-		 */
-		if (val1.is_nan()) {
-			return val1.NAN;
-		}
-		if (val2.is_nan()) {
-			return val2.NAN;
-		}
-		if (val2 == 0) {
-			return val2.INFINITY;
-		}
-		/* return the result */
-		return val1/val2;
-	}
-}
-
-public class rrd_rpnop_mod : rrd_rpnop_double_double
-{
-	public override double
-		getValue_double_double(
-			double ts,
-			double val1,
-			double val2)
-	{
-		/* some boundry case checks
-		 * not sure if other/different checks are needed
-		 */
-		if (val1.is_nan()) {
-			return val1.NAN;
-		}
-		if (val2.is_nan()) {
-			return val2.NAN;
-		}
-		if (val2 == 0) {
-			return val2.INFINITY;
-		}
-		/* return the result */
-		return val1 % val2;
-	}
-}
-
-public class rrd_rpnop_min : rrd_rpnop_minmaxavg
-{
-	public override void processDouble(double val)
-	{
-		if ( (count==0) || (val < res) ) {
-			res = val;
-		}
-	}
-
-	public override void processValue(rrd_value obj)
-	{
-		rrd_value_number num = (rrd_value_number) obj;
-		double val = (obj == null) ? res.NAN : num.getDouble();
-		if ( (count==0) || (val < res) ) {
-			resobj = obj;
-			res = val;
-		}
-	}
-}
-
-public class rrd_rpnop_avg : rrd_rpnop_minmaxavg
-{
-	public override void processDouble(double val)
-	{
-		res += val;
-	}
-
-	public override rrd_value? postprocessDouble()
-	{
-		double v = (count>0) ? res/count : res.NAN;
-		return new rrd_value_number.double(v);
-	}
-
-
-	public override void processValue(rrd_value obj)
-	{
-		rrd_value_number num = (rrd_value_number) obj;
-		res += (obj == null) ? res.NAN : num.getDouble();
-	}
-
-	public override rrd_value? postprocessValue()
-	{
-		double v = (count>0) ? res/count : res.NAN;
-		return new rrd_value_number.double(v);
-	}
-
-}
-
-public class rrd_rpnop_max : rrd_rpnop_minmaxavg
-{
-	public override void processDouble(double val)
-	{
-		if ( (count==0) || (val > res) ) {
-			res = val;
-		}
-	}
-
-	public override void processValue(rrd_value obj)
-	{
-		rrd_value_number num = (rrd_value_number) obj;
-		double val = (obj == null) ? res.NAN : num.getDouble();
-		if ( (count==0) || (val > res) ) {
-			resobj = obj;
-			res = val;
-		}
 	}
 }

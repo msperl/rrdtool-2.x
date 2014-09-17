@@ -147,6 +147,11 @@ public class rrd_command_graph_def : rrd_argument {
 		for (int i=0; i < cached_result.getSteps(); i++) {
 			cached_result.setData(i,dummy.NAN);
 		}
+		/* to avoid warnings */
+		rrdfile=null;
+		dsname=null;
+		cf=null;
+		reduce=null;
 
 		/* return result */
 		return cached_result;

@@ -18,7 +18,7 @@ public class rrd_value_rpn : rrd_value {
 
 	public override rrd_value? getValue(
 		rrd_command cmd,
-		rrd_rpn_stack? stack_arg = null)
+		rrd_rpn_stack? stack_arg)
 	{
 
 		/* if we got it cached, then  return it */

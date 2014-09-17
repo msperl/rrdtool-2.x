@@ -15,7 +15,7 @@ public abstract class rrd_value : rrd_object {
 
 	public virtual rrd_value? getValue(
 		rrd_command cmd,
-		rrd_rpn_stack? stack_arg = null)
+		rrd_rpn_stack? stack_arg)
 	{ return this; }
 
 	public abstract string? to_string();

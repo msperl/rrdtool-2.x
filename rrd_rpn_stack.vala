@@ -6,6 +6,19 @@ public class rrd_rpn_stack {
 	string stack_str = null;
 	rrd_command cmd = null;
 
+	public void dump()
+	{
+		stderr.printf("rrd_rpn_stack.dump():\n");
+		stderr.printf("String: %s\n",stack_str);
+
+		foreach(var entry in stack) {
+			stderr.printf("\t(%s) %s\n",
+				entry.get_type().name(),
+				entry.to_string()
+				);
+		}
+	}
+
 	/* the public parse method */
 	public rrd_value? parse(string arg, rrd_command command) {
 		/* set the values */

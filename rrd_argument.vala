@@ -35,7 +35,7 @@ public class rrd_argument : rrd_value {
 	{
 		rrd_value res = getParsedArgument(key);
 		if (res != null) {
-			return res.getValue(cmd);
+			return res.getValue(cmd,null);
 		}
 		return res;
 	}
