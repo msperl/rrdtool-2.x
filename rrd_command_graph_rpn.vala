@@ -27,10 +27,10 @@ public class rrd_command_graph_rpn : rrd_argument {
 		/* check if rrdfile and vname are defined
 		 * then the "normal" positional rules apply
 		 */
-		if (hasParsedArg("vname")) {
+		if (hasParsedArgument("vname")) {
 			return true;
 		}
-		if (hasParsedArg("rpn")) {
+		if (hasParsedArgument("rpn")) {
 			return true;
 		}
 
@@ -58,8 +58,8 @@ public class rrd_command_graph_rpn : rrd_argument {
 		}
 
 		/* so we got key,value, so assign it */
-		setParsedArg("vname",keyval[0]);
-		setParsedArg("rpn",keyval[1]);
+		setParsedArgument("vname",keyval[0]);
+		setParsedArgument("rpn",keyval[1]);
 
 		/* as we have been successfull we can strip it
 		 * from the position list now */
@@ -67,4 +67,31 @@ public class rrd_command_graph_rpn : rrd_argument {
 		/* and return successfull */
 		return true;
 	}
+
+	protected rrd_value cached_result = null;
+	public override rrd_value? getValue(
+		rrd_command cmd,
+		rrd_rpn_stack? stack = null)
+	{
+		/* take from cache */
+		if (cached_result != null)  {
+			return cached_result;
+		}
+		/* otherwise take from rpn itself */
+		cached_result = getParsedArgumentValue("rpn",cmd);
+
+		/* and return it */
+		return cached_result;
+	}
+
+	protected override void linkToCommandFullName(
+		rrd_command command,
+		string prefix)
+	{
+		command.setParsedArgument(
+			prefix,
+			getParsedArgument("rpn")
+			);
+	}
+
 }

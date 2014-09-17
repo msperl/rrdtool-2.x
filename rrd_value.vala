@@ -5,13 +5,18 @@ public abstract class rrd_value : rrd_object {
 
 	public string? String {get; protected set construct;}
 
-	public abstract bool parse_String() ;
+	public abstract bool parse_String();
 	construct {
 		parse_String();
 	}
 
 	public virtual void modifyOptEntry(ref OptionEntry oe)
 	{ ; }
+
+	public virtual rrd_value? getValue(
+		rrd_command cmd,
+		rrd_rpn_stack? stack_arg = null)
+	{ return this; }
 
 	public abstract string? to_string();
 
@@ -45,7 +50,8 @@ public class rrd_value_flag : rrd_value {
 		Object(String:flag.to_string());
 	}
 
-	protected override bool parse_String() {
+	protected override bool parse_String()
+	{
 		if (String == null) {
 			flag = false;
 		} else {
@@ -71,27 +77,65 @@ public class rrd_value_string : rrd_value {
 	{ return String; }
 }
 
-public class rrd_value_rpn : rrd_value {
-	protected string rpn;
-
+public class rrd_value_number : rrd_value {
+	protected double value;
 	protected override bool parse_String()
 	{
-		rpn = String;
+		value = value.NAN;
+		if (String != null) {
+			if (strcmp(String,"NaN") == 0)  {
+				// value = value.NAN;
+			} else {
+				string end = null;
+				value = String.to_double(out end);
+				if (strcmp(end,"") != 0) {
+					//value = value.NAN;
+				}
+			}
+		}
 		return true;
 	}
 
 	public override string? to_string()
-	{ return rpn; }
+	{ return "%f".printf(value); }
+
+	public virtual double getDouble()
+	{ return value; }
+
+	public virtual int getInteger()
+	{
+		double d = getDouble();
+		int i = (int) d;
+		if ((d - ((double) i)) > d.EPSILON) {
+			stderr.printf(
+				"%f is not an integer\n",
+				d);
+			return i.MIN;
+		}
+		return i;
+	}
+
+	public rrd_value_number.double(double a_value) {
+		String = "set directly" ;
+		value = a_value;
+	}
 }
 
-public class rrd_value_timestamp : rrd_value {
-
+public class rrd_value_timestamp : rrd_value_number {
 	protected override bool parse_String()
 	{
+		time_t now = time_t();
+		if (strcmp(String,"now")==0) {
+			value = now;
+		} else if (strcmp(String,"-1day")==0) {
+			value = now - 86400;
+		} else {
+			stderr.printf("Unsupported time definition: %s",
+				String);
+			return false;
+		}
 		return true;
 	}
-	public override string? to_string()
-	{ return String; }
 }
 
 public class rrd_value_counter : rrd_value {

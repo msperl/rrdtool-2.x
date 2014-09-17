@@ -11,22 +11,36 @@ public struct rrd_argument_entry {
 	public unowned string    arg_description;
 }
 
-public class rrd_argument : rrd_object {
+public class rrd_argument : rrd_value {
         public ArrayList<string> argsList { get; construct; }
         construct {
 		assert(argsList != null);
 		parseArgs(argsList);
         }
 
+	public bool execute(rrd_command cmd) {
+		return true;
+	}
+
 	private TreeMap<string,rrd_value> parsed_args;
 
-	public bool hasParsedArg(string key)
+	public bool hasParsedArgument(string key)
 	{ return parsed_args.has_key(key); }
 
-	public rrd_value? getParsedArg(string key)
+	public rrd_value? getParsedArgument(string key)
 	{ return parsed_args.get(key); }
 
-	protected bool setParsedArg(string key, string value) {
+	public rrd_value? getParsedArgumentValue(
+		string key, rrd_command cmd)
+	{
+		rrd_value res = getParsedArgument(key);
+		if (res != null) {
+			return res.getValue(cmd);
+		}
+		return res;
+	}
+
+	protected bool setParsedArgument(string key, string value) {
 		/* create a new class */
 		rrd_value val = getClassForKey(key,value);
 		/* if it is set, then it is in entries */
@@ -45,7 +59,6 @@ public class rrd_argument : rrd_object {
 				arg.key,arg.value.to_string());
 		}
 	}
-
 
 	/* our own split_colon method
 	 * that also takes care of escaped colons */
@@ -90,7 +103,7 @@ public class rrd_argument : rrd_object {
 
 	/* the factory that transforms a positional argument
 	 * into an object */
-	public static rrd_argument? factory(
+	public static new rrd_argument? factory(
 		rrd_command command, string cmdstr) {
 
 		/* split into a list */
@@ -153,7 +166,7 @@ public class rrd_argument : rrd_object {
 	public void linkToCommand(rrd_command command) {
 		/* copy debug from global context if it exists
 		 * and we have not set it locally */
-		if (! hasParsedArg("debug")) {
+		if (! hasParsedArgument("debug")) {
 			var cmd_debug = command.getParsedArgument("debug")
 				?? new rrd_value_flag(false);
 			/* this is an exception */
@@ -166,6 +179,9 @@ public class rrd_argument : rrd_object {
 		/* get the prefix to use */
 		var prefix=getPrefixName(command);
 
+		/* link the argument itself */
+		linkToCommandFullName(command,prefix);
+
 		/* now set it in the command context
 		 * - this should be a reference */
 		foreach(var kv in parsed_args) {
@@ -174,6 +190,11 @@ public class rrd_argument : rrd_object {
 				kv.value);
 		}
 	}
+
+	protected virtual void linkToCommandFullName(
+		rrd_command command,
+		string prefix)
+	{ command.setParsedArgument(prefix,this); }
 
 	protected bool parseArgs(ArrayList<string>? arg_list)
 	{
@@ -198,7 +219,7 @@ public class rrd_argument : rrd_object {
 					val = new rrd_value_flag(true);
 					parsed_args.set(key,val);
 				} else {
-					if (! setParsedArg(key,value)) {
+					if (! setParsedArgument(key,value)) {
 						pos_args.add(arg);
 					}
 				}
@@ -217,12 +238,12 @@ public class rrd_argument : rrd_object {
 		var entries = getArgumentEntries();
 
 		foreach(var entry in entries) {
-			if (hasParsedArg(entry.name)) {
+			if (hasParsedArgument(entry.name)) {
 				/* do nothing */
 			} else if (entry.is_positional) {
 				if (pos_args.size>0) {
 					/* create a new class */
-					setParsedArg(
+					setParsedArgument(
 						entry.name,
 						pos_args.remove_at(0)
 						);
@@ -234,8 +255,8 @@ public class rrd_argument : rrd_object {
 				}
 			} else {
 				/* set the default */
-				if (entry.default_value!=null) {
-					setParsedArg(
+				if (entry.default_value != null) {
+					setParsedArgument(
 						entry.name,
 						entry.default_value
 						);
@@ -274,12 +295,12 @@ public class rrd_argument : rrd_object {
 	protected virtual string getPrefixName(
 		rrd_command cmd) {
 		/* some defaults to minimize coding */
-		if (hasParsedArg("name")) {
-			return getParsedArg("name").to_string();
-		} else if (hasParsedArg("vname")) {
-			return getParsedArg("vname").to_string();
-		} else if (hasParsedArg("id")) {
-			return getParsedArg("id").to_string();
+		if (hasParsedArgument("name")) {
+			return getParsedArgument("name").to_string();
+		} else if (hasParsedArgument("vname")) {
+			return getParsedArgument("vname").to_string();
+		} else if (hasParsedArgument("id")) {
+			return getParsedArgument("id").to_string();
 		} else {
 			/* otherwise we get the generated version */
 			return cmd.getNewName(get_type().name());
@@ -324,5 +345,15 @@ public class rrd_argument : rrd_object {
 			ae.class_name,
 			value);
 		return obj;
+	}
+
+	public override bool parse_String()
+	{
+		return false;
+	}
+
+	public override string? to_string()
+	{
+		return "TODO";
 	}
 }

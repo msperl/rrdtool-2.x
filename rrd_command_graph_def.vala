@@ -63,10 +63,10 @@ public class rrd_command_graph_def : rrd_argument {
 		/* check if rrdfile and vname are defined
 		 * then the "normal" positional rules apply
 		 */
-		if (hasParsedArg("vname")) {
+		if (hasParsedArgument("vname")) {
 			return true;
 		}
-		if (hasParsedArg("rrdfile")) {
+		if (hasParsedArgument("rrdfile")) {
 			return true;
 		}
 
@@ -94,13 +94,39 @@ public class rrd_command_graph_def : rrd_argument {
 		}
 
 		/* so we got key,value, so assign it */
-		setParsedArg("vname",keyval[0]);
-		setParsedArg("rrdfile",keyval[1]);
+		setParsedArgument("vname",keyval[0]);
+		setParsedArgument("rrdfile",keyval[1]);
 
 		/* as we have been successfull we can strip it
 		 * from the position list now */
 		positional.remove_at(0);
 		/* and return successfull */
 		return true;
+	}
+
+	protected rrd_value_timestring cached_result = null;
+
+	public override rrd_value? getValue(
+		rrd_command cmd,
+		rrd_rpn_stack? stack = null)
+	{
+		if (cached_result != null)  {
+			return cached_result;
+		}
+
+		rrd_value_timestamp start =
+			(rrd_value_timestamp) getParsedArgumentValue(
+				"start", cmd);
+		rrd_value_number step =
+			(rrd_value_number) getParsedArgumentValue(
+				"step", cmd);
+		rrd_value_timestamp end =
+			(rrd_value_timestamp) getParsedArgumentValue(
+				"end", cmd);
+
+		cached_result = new rrd_value_timestring.init(
+			start,step,end,null);
+		return cached_result;
+
 	}
 }

@@ -58,10 +58,40 @@ public class rrd_command : rrd_object {
 			} else {
 				var vtype = v.get_type().name();
 				var vstr = v.to_string();
-				stderr.printf("\t%-40s\t = (%s)\t%s\n",
-					val.key,
-					vtype,
-					vstr);
+				if (v is rrd_value_rpn) {
+					var vobj = v.getValue(
+						this, null);
+					if (vobj == null) {
+						stderr.printf(
+							"\t%-40s\t = (%s)"
+							+ "\t%s = ERROR\n",
+							val.key,
+							vtype,
+							vstr
+							);
+					} else {
+						var vval =
+							vobj.to_string();
+						var vobjtype =
+							vobj.get_type().name();
+						stderr.printf(
+							"\t%-40s\t = (%s)"
+							+ "\t%s = (%s) %s\n",
+							val.key,
+							vtype,
+							vstr,
+							vobjtype,
+							vval
+							);
+					}
+				} else {
+					stderr.printf(
+						"\t%-40s\t = (%s)\t%s\n",
+						val.key,
+						vtype,
+						vstr
+						);
+				}
 			}
 		}
 	}
@@ -352,5 +382,4 @@ public class rrd_command : rrd_object {
 		/* and return the class */
 		return cmdclass;
 	}
-
 }
