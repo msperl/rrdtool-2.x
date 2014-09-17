@@ -113,7 +113,7 @@ public class rrd_command_graph_def : rrd_argument {
 		if (cached_result != null)  {
 			return cached_result;
 		}
-
+		/* the start/step/end values */
 		rrd_value_timestamp start =
 			(rrd_value_timestamp) getParsedArgumentValue(
 				"start", cmd);
@@ -124,8 +124,31 @@ public class rrd_command_graph_def : rrd_argument {
 			(rrd_value_timestamp) getParsedArgumentValue(
 				"end", cmd);
 
+		/* the information that is specific to rrdfile */
+		rrd_value_string rrdfile =
+			(rrd_value_string) getParsedArgumentValue(
+				"rrdfile", cmd);
+		rrd_value_string dsname =
+			(rrd_value_string) getParsedArgumentValue(
+				"dsname", cmd);
+		rrd_value_string cf =
+			(rrd_value_string) getParsedArgumentValue(
+				"cf", cmd);
+		rrd_value_string reduce =
+			(rrd_value_string) getParsedArgumentValue(
+				"cf", cmd);
+
+		/* create the timestring */
 		cached_result = new rrd_value_timestring.init(
 			start,step,end,null);
+
+		/* fill in the timestring */
+		double dummy=0;
+		for (int i=0; i < cached_result.getSteps(); i++) {
+			cached_result.setData(i,dummy.NAN);
+		}
+
+		/* return result */
 		return cached_result;
 
 	}
