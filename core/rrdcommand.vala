@@ -38,6 +38,10 @@ public class rrd.command : rrd.object {
 	{
 		parsed_args.set(key,value);
 	}
+	public bool hasParsedArgument(string key)
+	{
+		return parsed_args.has_key(key);
+	}
 
 	public rrd.value? getParsedArgument(string key)
 	{
@@ -109,10 +113,66 @@ public class rrd.command : rrd.object {
 		return group+count.to_string();
 	}
 
+	protected rrd.argument_entry? getArgumentEntry(string name)
+	{
+		/* get the arg info for this class */
+		var entries = getCommandOptions();
+		/* iterate to find */
+		foreach(var ae in entries) {
+			if (strcmp(ae.name,name)==0) {
+				return ae;
+			}
+		}
+		/* return empty */
+		return null;
+	}
+
+	protected rrd.value? getClassForKey(
+		string name, string value)
+	{
+		/* get the argument entry */
+		var ae = getArgumentEntry(name);
+		if (ae == null) {
+			return null;
+		}
+		/* now use the class factory */
+		var obj = rrd.value.factory(
+			ae.class_name,
+			value);
+		return obj;
+	}
+
 	/* and the positional Argument Parser */
 	protected virtual bool
 		parsePositionalArguments(ArrayList<string> args)
 	{
+		/* parse the positional arguments */
+		var command_options = getCommandOptions();
+		if (command_options != null) {
+			foreach (var entry in command_options) {
+				if (hasParsedArgument(entry.name)) {
+					/* do nothing */
+				} else if (entry.is_positional) {
+					if (args.size>0) {
+						var res =  getClassForKey(
+							entry.name,
+							args.remove_at(0)
+							);
+						/* create a new class */
+						setParsedArgument(
+							entry.name,
+							res
+							);
+					} else {
+						stderr.printf("Positional argument"
+							+ "for %s not given\n",
+							entry.name);
+						return false;
+					}
+				}
+			}
+		}
+
 		/* iterate the arguments */
 		foreach(var arg in args) {
 			var argclass=rrd.argument.factory(this,arg);

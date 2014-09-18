@@ -62,7 +62,7 @@ public class rrd.argument : rrd.value {
 
 	/* our own split_colon method
 	 * that also takes care of escaped colons */
-	public static ArrayList<string>? split_colon(string arg) {
+	protected static ArrayList<string>? split_colon(string arg) {
 		/* move it to an ArrayList on split
 		 * but also join the ones that have been escaped
 		 */

@@ -2,8 +2,16 @@ using GLib;
 using Gee;
 
 public class rrd.command_graph : rrd.command {
+//	protected Cairo.ImageSurface surface = null;
+//	protected Cairo.Context context = null;
 
 	protected const rrd.argument_entry[] COMMAND_ARGUMENT_ENTRIES = {
+		{ "imagefile", 0, "rrdvalue_string", null, true,
+		  "filename to create", "<filename>"
+		},
+		{ "imgformat", 'a', "rrdvalue_string", "PNG", false,
+		  "type of image", "<title>"
+		},
 		{ "width", 'w', "rrdvalue_rpn", "600", false,
 		  "given width", "<width in pixel>"
 		},
