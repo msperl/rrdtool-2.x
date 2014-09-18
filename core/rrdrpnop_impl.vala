@@ -196,7 +196,7 @@ public class rrd.rpnop_timestring : rrd.rpnop_obj_obj_obj
 	}
 }
 
-public class rrd.rpnop_timestamp : rrd.rpnop_double
+public class rrd.rpnop_time : rrd.rpnop_double
 {
 	public override double
 		getValue_double(
@@ -206,3 +206,81 @@ public class rrd.rpnop_timestamp : rrd.rpnop_double
 		return ts;
 	}
 }
+
+public class rrd.rpnop_now : rrd.rpnop_double
+{
+	public override double
+		getValue_double(
+			double ts,
+			double val)
+	{
+		return time_t();
+	}
+}
+
+public class rrd.rpnop_sin : rrd.rpnop_double
+{
+	public override double
+		getValue_double(
+			double ts,
+			double val)
+	{
+		return Math.sin(val);
+	}
+}
+
+public class rrd.rpnop_cos : rrd.rpnop_double
+{
+	public override double
+		getValue_double(
+			double ts,
+			double val)
+	{
+		return Math.cos(val);
+	}
+}
+
+public class rrd.rpnop_log : rrd.rpnop_double
+{
+	public override double
+		getValue_double(
+			double ts,
+			double val)
+	{
+		return Math.log(val);
+	}
+}
+
+public class rrd.rpnop_exp : rrd.rpnop_double
+{
+	public override double
+		getValue_double(
+			double ts,
+			double val)
+	{
+		return Math.exp(val);
+	}
+}
+
+public class rrd.rpnop_sqrt : rrd.rpnop_double
+{
+	public override double
+		getValue_double(
+			double ts,
+			double val)
+	{
+		return Math.sqrt(val);
+	}
+}
+
+public class rrd.rpnop_atan : rrd.rpnop_double
+{
+	public override double
+		getValue_double(
+			double ts,
+			double val)
+	{
+		return Math.atan(val);
+	}
+}
+
