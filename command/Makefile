@@ -9,7 +9,7 @@ CC=gcc
 CFLAGS=-g -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/gee-1.0 -Wall -g -fPIC -I$(INCDIR)
 LDFLAGS=-g -l rrd2_core -pthread -lgee -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0 -lm -L $(LIBDIR)
 
-VALASRC=$(wildcard *.vala)
+VALASRC=$(wildcard *.vala */*.vala)
 VALACSRC=$(addprefix $(BUILDBASE)/,$(VALASRC:.vala=.c))
 VALAOBJ=$(VALACSRC:.c=.o)
 
