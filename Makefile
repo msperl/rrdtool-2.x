@@ -5,17 +5,39 @@ OBJ=$(VALACSRC:.c=.o) $(CSRC:.c=.o)
 EXE=rrdtool
 
 VALAC=valac
-VALAFLAGS=-g --pkg gee-1.0
-CC=gcc
-CFLAGS=-I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/gee-1.0 -Wall -g
-LDFLAGS=-pthread -lgee -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0 -lm -g
+VALAFLAGS=-g --vapidir vapi -X -Iinclude --pkg gee-1.0 --pkg rrd2_core --pkg rrd2_command -X -Llib -X -lrrd2_core -X -lrrd2_command -X -lm -X -Wl,-rpath=lib
 
-all: $(EXE)
-clean:
+BASEDIRS=vapi lib include
+
+all: $(BASEDIRS) core command $(EXE)
+
+vapi:
+	mkdir -p $<
+lib:
+	mkdir -p $<
+include:
+	mkdir -p $<
+
+clean:  clean_core clean_command
 	rm -f *.o *.c $(EXE)
+	rm -rf vapi lib include
+
+core::
+	$(MAKE) -C core
+clean_core::
+	$(MAKE) -C core clean
+
+command::
+	$(MAKE) -C command
+clean_command::
+	$(MAKE) -C command clean
+
+$(EXE): $(BASEDIRS) core command $(VALASRC)
+	$(VALAC) $(VALAFLAGS) $(VALASRC)
 
 test: $(EXE)
 	@rm -f core.*
+	LD_LIBRARY_PATH=lib \
 	./$(EXE) --verbose --debug graph --width 600 --height 300 \
 		dEf:test=/tmp/test.rrd:field1:AVG \
 		'comment:abc\\:cde'
@@ -28,10 +50,3 @@ preload.c: $(VALACSRC)
 	| awk '{C[$$2]=$$0;}END{print "#include <glib.h>";print "#include <glib-object.h>";for(i in C) {print "extern",C[i];}print "static void __attribute__((constructor)) init_lib(void) {";print "  GType t;";print "  g_type_init();";for(i in C) {print "  t = "i" ();";};print "}";}' \
 	> $@
 
-$(EXE): $(OBJ)
-
-.SECONDARY: $(COBJ)
-
-# this does compile too often - no idea yet how to do it correctly...
-%.c: %.vala
-	$(VALAC) $(VALAFLAGS) -C $(VALASRC)

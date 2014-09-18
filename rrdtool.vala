@@ -1,5 +1,6 @@
 using GLib;
 using Gee;
+using rrd;
 
 public class rrdtool {
 
