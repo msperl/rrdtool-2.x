@@ -1,7 +1,7 @@
 using GLib;
 using Gee;
 
-public class rrd_command : rrd_object {
+public class rrd.command : rrd.object {
 
 	public ArrayList<string> argsList { get; construct; }
 	construct {
@@ -10,36 +10,36 @@ public class rrd_command : rrd_object {
 	}
 
 	/* the argument objects in sequence */
-	protected ArrayList<rrd_argument> arg_list =
-		new ArrayList<rrd_argument>();
+	protected ArrayList<rrd.argument> arg_list =
+		new ArrayList<rrd.argument>();
 
 	/* the parsed arguments so far */
-	protected TreeMap<string,rrd_value> parsed_args =
-		new TreeMap<string,rrd_value>();
+	protected TreeMap<string,rrd.value> parsed_args =
+		new TreeMap<string,rrd.value>();
 
 	/* the common arguments */
-	protected const rrd_argument_entry[] COMMON_ARGUMENT_ENTRIES = {
+	protected const rrd.argument_entry[] COMMON_ARGUMENT_ENTRIES = {
 		{ "debug",   0,
-		  "rrd_value_flag",
+		  "rrdvalue_flag",
 		  "0",
 		  false,
 		  "enable debugging" },
 		{ "verbose", 'v',
-		  "rrd_value_flag",
+		  "rrdvalue_flag",
 		  "0",
 		  false,
 		  "increase verbosity" }
 	};
 	/* the command options that the implementations have */
-	protected virtual rrd_argument_entry[]? getCommandOptions()
+	protected virtual rrd.argument_entry[]? getCommandOptions()
 	{ return null; }
 
-	public void setParsedArgument(string key, rrd_value value)
+	public void setParsedArgument(string key, rrd.value value)
 	{
 		parsed_args.set(key,value);
 	}
 
-	public rrd_value? getParsedArgument(string key)
+	public rrd.value? getParsedArgument(string key)
 	{
 		if (parsed_args.has_key(key)) {
 			return parsed_args.get(key);
@@ -51,14 +51,14 @@ public class rrd_command : rrd_object {
 	{
 		stderr.printf("Command: %s\n",get_type().name());
 		foreach(var val in parsed_args) {
-			rrd_value v = val.value;
+			rrd.value v = val.value;
 			if (val.value == null) {
 				stderr.printf("\t%-40s\t = NULL\n",
 					val.key);
 			} else {
 				var vtype = v.get_type().name();
 				var vstr = v.to_string();
-				if (v is rrd_value_rpn) {
+				if (v is rrd.value_rpn) {
 					var vobj = v.getValue(
 						this, null);
 					if (vobj == null) {
@@ -101,7 +101,7 @@ public class rrd_command : rrd_object {
 		var key = ".unnamed_counter." + group;
 		var count = getParsedArgument(key);
 		if (count == null) {
-			count = new rrd_value_counter();
+			count = new rrd.value_counter();
 			setParsedArgument(key,count);
 		}
 
@@ -115,7 +115,7 @@ public class rrd_command : rrd_object {
 	{
 		/* iterate the arguments */
 		foreach(var arg in args) {
-			var argclass=rrd_argument.factory(this,arg);
+			var argclass=rrd.argument.factory(this,arg);
 			if (argclass==null) {
 				return false;
 			}
@@ -131,7 +131,7 @@ public class rrd_command : rrd_object {
 	}
 
 	/* common method to get the "complete" name */
-	protected rrd_argument_entry? getArgEntryForName(string fullname)
+	protected rrd.argument_entry? getArgEntryForName(string fullname)
 	{
 		/* get the command options */
 		var command_options = getCommandOptions();
@@ -174,14 +174,14 @@ public class rrd_command : rrd_object {
 	protected static bool optionCallback(
 		string nam,
 		string? val,
-		rrd_command data,
+		rrd.command data,
 		ref OptionError error)
 		throws OptionError
 	{
 		/* translate name */
 		var ae = data.getArgEntryForName(nam);
 		/* create the value needed */
-		var value = rrd_value.from_ArgEntry(ae,val);
+		var value = rrd.value.from_ArgEntry(ae,val);
 		/* set in array */
 		data.parsed_args.set(ae.name,value);
 		/* return OK */
@@ -189,15 +189,15 @@ public class rrd_command : rrd_object {
 	}
 
 	protected void add_command_args(OptionGroup group,
-				 rrd_argument_entry[] command_options)
+				 rrd.argument_entry[] command_options)
 	{
 		foreach (var co in command_options) {
 			/* add also the default values to the structure */
-			rrd_value def = null;
+			rrd.value def = null;
 			if (co.default_value != null) {
 				assert(co.is_positional != true);
-				def = (rrd_value) classFactory(
-					co.class_name, "rrd_value",
+				def = (rrd.value) classFactory(
+					co.class_name, "rrdvalue",
 					"String", co.default_value);
 				parsed_args.set(co.name, def);
 			}
@@ -229,7 +229,7 @@ public class rrd_command : rrd_object {
 		/* based on the class st values differently */
 		bool ignore_ukn = false;
 		bool help_en = true;
-		if (strcmp(get_type().name(),"rrd_command")==0) {
+		if (strcmp(get_type().name(),"rrdcommand")==0) {
 			ignore_ukn = true;
 			help_en = false;
 		}
@@ -241,7 +241,7 @@ public class rrd_command : rrd_object {
 		string[] args_array = new string[args.size+1];
 		int i = 0;
 		/* dummy to make OptionContext.parse() happy */
-		args_array[i++] = "rrdtool";
+		args_array[i++] = "rrdool";
 		foreach(var arg in args) {
 			args_array[i++] = arg;
 		}
@@ -272,7 +272,7 @@ public class rrd_command : rrd_object {
 			/* get the name of the class */
 			var cmdname =
 				this.get_type().name()
-				/* stripping rrd_command_ */
+				/* stripping rrd.command_ */
 				.substring(12);
 
 			/* create a option group */
@@ -308,8 +308,8 @@ public class rrd_command : rrd_object {
 		args.remove_at(0);
 
 		/* and parse the Positional Arguments
-		 * if we are NOT of type rrd_command itself */
-		if(strcmp(this.get_type().name(),"rrd_command") != 0) {
+		 * if we are NOT of type rrd.command itself */
+		if(strcmp(this.get_type().name(),"rrdcommand") != 0) {
 			parsePositionalArguments(args);
 		}
 	}
@@ -321,7 +321,7 @@ public class rrd_command : rrd_object {
 		return false;
 	}
 
-	public static rrd_command? factorySysArgs(string[] sysargs)
+	public static rrd.command? factorySysArgs(string[] sysargs)
 	{
 		/* move to args as list */
 		var args=new ArrayList<string>();
@@ -332,7 +332,7 @@ public class rrd_command : rrd_object {
 		return factory(args);
 	}
 
-	public static rrd_command? factory(ArrayList<string> args)
+	public static rrd.command? factory(ArrayList<string> args)
 	{
 		/* here we need to create a copy of the ArrayList first,
 		 * as we need to parse/strip the common args first once
@@ -341,12 +341,12 @@ public class rrd_command : rrd_object {
 		var args_copy = new ArrayList<string>();
 		foreach(var arg in args) { args_copy.add(arg); }
 
-		/* now create a generic rrd_command to strip out the
+		/* now create a generic rrd.command to strip out the
 		 * common arguments so that we get to the command
 		 * we forget about it immediately
 		 */
-		rrd_command cmdclass = (rrd_command) classFactory(
-			"rrd_command",
+		rrd.command cmdclass = (rrd.command) classFactory(
+			"rrdcommand",
 			null,
 			"argsList", args_copy
 			);
@@ -373,9 +373,9 @@ public class rrd_command : rrd_object {
 		/* create the final object with a predefined name
 		 * and a subclass
 		 */
-		cmdclass = (rrd_command) classFactory(
-			"rrd_command_" + command,
-			"rrd_command",
+		cmdclass = (rrd.command) classFactory(
+			"rrdcommand_" + command,
+			"rrdcommand",
 			"argsList", args
 			);
 

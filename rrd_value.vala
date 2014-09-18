@@ -1,7 +1,7 @@
 using GLib;
 using Gee;
 
-public abstract class rrd_value : rrd_object {
+public abstract class rrd.value : rrd.object {
 
 	public string? String {get; protected set construct;}
 
@@ -13,15 +13,15 @@ public abstract class rrd_value : rrd_object {
 	public virtual void modifyOptEntry(ref OptionEntry oe)
 	{ ; }
 
-	public virtual rrd_value? getValue(
-		rrd_command cmd,
-		rrd_rpn_stack? stack_arg)
+	public virtual rrd.value? getValue(
+		rrd.command cmd,
+		rrd.rpn_stack? stack_arg)
 	{ return this; }
 
 	public abstract string? to_string();
 
-	public static rrd_value? from_ArgEntry(
-		rrd_argument_entry ae,
+	public static rrd.value? from_ArgEntry(
+		rrd.argument_entry ae,
 		string? value) {
 
 		/* the value */
@@ -33,20 +33,20 @@ public abstract class rrd_value : rrd_object {
 
 	}
 
-	public static rrd_value? factory(
+	public static rrd.value? factory(
 		string class_name, string value)
 	{
-		return (rrd_value) rrd_object.classFactory(
+		return (rrd.value) rrd.object.classFactory(
 			class_name,
-			"rrd_value",
+			"rrdvalue",
 			"String",value);
 	}
 }
 
-public class rrd_value_flag : rrd_value {
+public class rrd.value_flag : rrd.value {
 	bool flag;
 
-	public rrd_value_flag(bool flag) {
+	public value_flag(bool flag) {
 		Object(String:flag.to_string());
 	}
 
@@ -69,7 +69,7 @@ public class rrd_value_flag : rrd_value {
 	}
 }
 
-public class rrd_value_string : rrd_value {
+public class rrd.value_string : rrd.value {
 	protected override bool parse_String()
 	{ return true; }
 
@@ -77,7 +77,7 @@ public class rrd_value_string : rrd_value {
 	{ return String; }
 }
 
-public class rrd_value_number : rrd_value {
+public class rrd.value_number : rrd.value {
 	protected double value;
 	protected override bool parse_String()
 	{
@@ -115,13 +115,13 @@ public class rrd_value_number : rrd_value {
 		return i;
 	}
 
-	public rrd_value_number.double(double a_value) {
+	public rrd.value_number.double(double a_value) {
 		String = "set directly" ;
 		value = a_value;
 	}
 }
 
-public class rrd_value_timestamp : rrd_value_number {
+public class rrd.value_timestamp : rrd.value_number {
 	protected override bool parse_String()
 	{
 		time_t now = time_t();
@@ -138,7 +138,7 @@ public class rrd_value_timestamp : rrd_value_number {
 	}
 }
 
-public class rrd_value_counter : rrd_value {
+public class rrd.value_counter : rrd.value {
 	protected int count;
 
 	protected override bool parse_String()

@@ -1,14 +1,14 @@
 using GLib;
 using Gee;
 
-public class rrd_rpn_stack {
-	protected LinkedList<rrd_value> stack = null;
+public class rrd.rpn_stack {
+	protected LinkedList<rrd.value> stack = null;
 	string stack_str = null;
-	rrd_command cmd = null;
+	rrd.command cmd = null;
 
 	public void dump()
 	{
-		stderr.printf("rrd_rpn_stack.dump():\n");
+		stderr.printf("rrdrpn_stack.dump():\n");
 		stderr.printf("String: %s\n",stack_str);
 
 		foreach(var entry in stack) {
@@ -20,12 +20,12 @@ public class rrd_rpn_stack {
 	}
 
 	/* the public parse method */
-	public rrd_value? parse(string arg, rrd_command command) {
+	public rrd.value? parse(string arg, rrd.command command) {
 		/* set the values */
 		stack_str = arg;
 		cmd = command;
 		/* create the stack */
-		stack = new LinkedList<rrd_value>();
+		stack = new LinkedList<rrd.value>();
 
 		/* split the values */
 		if (! split() ) {
@@ -33,7 +33,7 @@ public class rrd_rpn_stack {
 		}
 
 		/* now process the stack */
-		rrd_value result = process();
+		rrd.value result = process();
 
 		/* if the stack is not empty, then complain */
 		if (stack.size > 0) {
@@ -48,7 +48,7 @@ public class rrd_rpn_stack {
 		return result;
 	}
 
-	protected rrd_value_string? parseString(string field) {
+	protected rrd.value_string? parseString(string field) {
 		var len= field.length;
 		/* field must be at least 2 */
 		if (len < 2) {
@@ -67,8 +67,8 @@ public class rrd_rpn_stack {
 			||
 			(strcmp(first,"\"") == 0 )
 			) {
-			return (rrd_value_string) rrd_value.factory(
-				"rrd_value_string",
+			return (rrd.value_string) rrd.value.factory(
+				"rrdvalue_string",
 				field.substring(
 					2,
 					field.length-2
@@ -78,24 +78,24 @@ public class rrd_rpn_stack {
 		return null;
 	}
 
-	protected rrd_value_number? parseNumber(string field) {
+	protected rrd.value_number? parseNumber(string field) {
 		double val = 0;
 		if (strcmp(field,"NAN")==0) {
-			return new rrd_value_number.double(val.NAN);
+			return new rrd.value_number.double(val.NAN);
 		} else if (strcmp(field,"INF")==0) {
-			return new rrd_value_number.double(val.INFINITY);
+			return new rrd.value_number.double(val.INFINITY);
 		} else {
 			string end = null;
 			val = field.to_double(out end);
 			if (strcmp(end,"") == 0) {
-				return new rrd_value_number.double(val);
+				return new rrd.value_number.double(val);
 			}
 		}
 		return null;
 	}
 
-	protected rrd_rpnop? parseOperator(string field) {
-		return  rrd_rpnop.factory(field);
+	protected rrd.rpnop? parseOperator(string field) {
+		return  rrd.rpnop.factory(field);
 	}
 
 	protected bool split()
@@ -105,7 +105,7 @@ public class rrd_rpn_stack {
 			/* try to identify the field */
 
 			/* check if it is an existing field */
-			rrd_value entry = cmd.getParsedArgument(field);
+			rrd.value entry = cmd.getParsedArgument(field);
 			/* else check if it is a string */
 			if ( entry == null)
 				entry = parseString(field);
@@ -132,9 +132,9 @@ public class rrd_rpn_stack {
 		return true;
 	}
 
-	protected rrd_value? process() {
+	protected rrd.value? process() {
 		/* pop a value from stack */
-		rrd_value top = pop();
+		rrd.value top = pop();
 		if (top == null) {
 			return null;
 		}
@@ -142,7 +142,7 @@ public class rrd_rpn_stack {
 		return top.getValue(cmd,this);
 	}
 
-	public rrd_value? pop() {
+	public rrd.value? pop() {
 		if (stack.size>0) {
 			return stack.poll_tail();
 		} else {
@@ -150,7 +150,7 @@ public class rrd_rpn_stack {
 			return null;
 		}
 	}
-	public void push(rrd_value val) {
+	public void push(rrd.value val) {
 		stack.offer_tail(val);
 	}
 }

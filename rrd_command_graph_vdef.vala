@@ -1,3 +1,3 @@
-public class rrd_command_graph_vdef : rrd_command_graph_rpn
+public class rrd.command_graph_vdef : rrd.command_graph_rpn
 {
 }

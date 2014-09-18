@@ -1,9 +1,9 @@
 using GLib;
 using Gee;
 
-public class rrd_object : GLib.Object {
+public class rrd.object : GLib.Object {
 
-	public static rrd_object? classFactory(
+	public static rrd.object? classFactory(
 		string class_name, string? subclassof,
 		string? key=null, void* value=null)
 	{
@@ -14,7 +14,7 @@ public class rrd_object : GLib.Object {
 		return classFactoryByType(class_type,key,value);
 	}
 
-	public static rrd_object? classFactoryByType(
+	public static rrd.object? classFactoryByType(
 		Type class_type,
 		string? key=null, void* value=null,
 		string? key2=null, void* value2=null
@@ -25,18 +25,18 @@ public class rrd_object : GLib.Object {
 		 * there may be an easier way, but probably
 		 * not with vala for RH6
 		 */
-		rrd_object obj;
+		rrd.object obj;
 		if (key2 != null) {
-			obj = (rrd_object) Object.new(
+			obj = (rrd.object) Object.new(
 				class_type,
 				key, value,
 				key2, value2);
 		} else if (key != null) {
-			obj = (rrd_object) Object.new(
+			obj = (rrd.object) Object.new(
 				class_type,
 				key,value);
 		} else {
-			obj = (rrd_object) Object.new(
+			obj = (rrd.object) Object.new(
 				class_type);
 		}
 		if ( obj == null ) {

@@ -1,7 +1,7 @@
 using GLib;
 using Gee;
 
-public class rrd_value_timestring : rrd_value {
+public class rrd.value_timestring : rrd.value {
 	protected double start=0;
 	public double getStart() { return start; }
 
@@ -55,10 +55,10 @@ public class rrd_value_timestring : rrd_value {
 		data = null;
 		return true;
 	}
-	public rrd_value_timestring.init(
-		rrd_value_number a_start,
-		rrd_value_number a_step,
-		rrd_value_number a_end,
+	public rrd.value_timestring.init(
+		rrd.value_number a_start,
+		rrd.value_number a_step,
+		rrd.value_number a_end,
 		double[]? a_data = null
 		)
 	{
@@ -66,13 +66,13 @@ public class rrd_value_timestring : rrd_value {
 		var v_step = a_step.getDouble();
 		var v_end = a_end.getDouble();
 
-		rrd_value_timestring.init_double(
+		rrd.value_timestring.init_double(
 			v_start, v_step, v_end,
 			a_data
 			);
 	}
 
-	public rrd_value_timestring.init_double(
+	public rrd.value_timestring.init_double(
 		double a_start,
 		double a_step,
 		double a_end,

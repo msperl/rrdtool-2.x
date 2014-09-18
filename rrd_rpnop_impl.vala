@@ -1,7 +1,7 @@
 using GLib;
 using Gee;
 
-public class rrd_rpnop_add : rrd_rpnop_double_double
+public class rrd.rpnop_add : rrd.rpnop_double_double
 {
 	public override double
 		getValue_double_double(
@@ -13,7 +13,7 @@ public class rrd_rpnop_add : rrd_rpnop_double_double
 	}
 }
 
-public class rrd_rpnop_addnan : rrd_rpnop_double_double
+public class rrd.rpnop_addnan : rrd.rpnop_double_double
 {
 	public override double
 		getValue_double_double(
@@ -31,7 +31,7 @@ public class rrd_rpnop_addnan : rrd_rpnop_double_double
 	}
 }
 
-public class rrd_rpnop_sub : rrd_rpnop_double_double
+public class rrd.rpnop_sub : rrd.rpnop_double_double
 {
 	public override double
 		getValue_double_double(
@@ -43,7 +43,7 @@ public class rrd_rpnop_sub : rrd_rpnop_double_double
 	}
 }
 
-public class rrd_rpnop_mul : rrd_rpnop_double_double
+public class rrd.rpnop_mul : rrd.rpnop_double_double
 {
 	public override double
 		getValue_double_double(
@@ -55,7 +55,7 @@ public class rrd_rpnop_mul : rrd_rpnop_double_double
 	}
 }
 
-public class rrd_rpnop_div : rrd_rpnop_double_double
+public class rrd.rpnop_div : rrd.rpnop_double_double
 {
 	public override double
 		getValue_double_double(
@@ -80,7 +80,7 @@ public class rrd_rpnop_div : rrd_rpnop_double_double
 	}
 }
 
-public class rrd_rpnop_mod : rrd_rpnop_double_double
+public class rrd.rpnop_mod : rrd.rpnop_double_double
 {
 	public override double
 		getValue_double_double(
@@ -105,7 +105,7 @@ public class rrd_rpnop_mod : rrd_rpnop_double_double
 	}
 }
 
-public class rrd_rpnop_min : rrd_rpnop_one_or_n_plus_one
+public class rrd.rpnop_min : rrd.rpnop_one_or_n_plus_one
 {
 	public override void processDouble(double val)
 	{
@@ -114,9 +114,9 @@ public class rrd_rpnop_min : rrd_rpnop_one_or_n_plus_one
 		}
 	}
 
-	public override void processValue(rrd_value obj)
+	public override void processValue(rrd.value obj)
 	{
-		rrd_value_number num = (rrd_value_number) obj;
+		rrd.value_number num = (rrd.value_number) obj;
 		double val = (obj == null) ? res.NAN : num.getDouble();
 		if ( (count==0) || (val < res) ) {
 			resobj = obj;
@@ -125,35 +125,35 @@ public class rrd_rpnop_min : rrd_rpnop_one_or_n_plus_one
 	}
 }
 
-public class rrd_rpnop_avg : rrd_rpnop_one_or_n_plus_one
+public class rrd.rpnop_avg : rrd.rpnop_one_or_n_plus_one
 {
 	public override void processDouble(double val)
 	{
 		res += val;
 	}
 
-	public override rrd_value? postprocessDouble()
+	public override rrd.value? postprocessDouble()
 	{
 		double v = (count>0) ? res/count : res.NAN;
-		return new rrd_value_number.double(v);
+		return new rrd.value_number.double(v);
 	}
 
 
-	public override void processValue(rrd_value obj)
+	public override void processValue(rrd.value obj)
 	{
-		rrd_value_number num = (rrd_value_number) obj;
+		rrd.value_number num = (rrd.value_number) obj;
 		res += (obj == null) ? res.NAN : num.getDouble();
 	}
 
-	public override rrd_value? postprocessValue()
+	public override rrd.value? postprocessValue()
 	{
 		double v = (count>0) ? res/count : res.NAN;
-		return new rrd_value_number.double(v);
+		return new rrd.value_number.double(v);
 	}
 
 }
 
-public class rrd_rpnop_max : rrd_rpnop_one_or_n_plus_one
+public class rrd.rpnop_max : rrd.rpnop_one_or_n_plus_one
 {
 	public override void processDouble(double val)
 	{
@@ -162,9 +162,9 @@ public class rrd_rpnop_max : rrd_rpnop_one_or_n_plus_one
 		}
 	}
 
-	public override void processValue(rrd_value obj)
+	public override void processValue(rrd.value obj)
 	{
-		rrd_value_number num = (rrd_value_number) obj;
+		rrd.value_number num = (rrd.value_number) obj;
 		double val = (obj == null) ? res.NAN : num.getDouble();
 		if ( (count==0) || (val > res) ) {
 			resobj = obj;
@@ -173,22 +173,22 @@ public class rrd_rpnop_max : rrd_rpnop_one_or_n_plus_one
 	}
 }
 
-public class rrd_rpnop_timestring : rrd_rpnop_obj_obj_obj
+public class rrd.rpnop_timestring : rrd.rpnop_obj_obj_obj
 {
-	public override rrd_value? getValue3(
-		rrd_value start_v,
-		rrd_value step_v,
-		rrd_value end_v,
-		rrd_command cmd,
-		rrd_rpn_stack? stack) {
+	public override rrd.value? getValue3(
+		rrd.value start_v,
+		rrd.value step_v,
+		rrd.value end_v,
+		rrd.command cmd,
+		rrd.rpn_stack? stack) {
 
 		/* transform values */
-		var start = (rrd_value_number) start_v;
-		var step = (rrd_value_number) step_v;
-		var end = (rrd_value_number) end_v;
+		var start = (rrd.value_number) start_v;
+		var step = (rrd.value_number) step_v;
+		var end = (rrd.value_number) end_v;
 
-		/* now we got everything, so create rrd_value_timestring */
-                rrd_value cached_result = new rrd_value_timestring.init(
+		/* now we got everything, so create rrd.value_timestring */
+                rrd.value cached_result = new rrd.value_timestring.init(
                         start,step,end,null);
 
 		/* and return it */
@@ -196,7 +196,7 @@ public class rrd_rpnop_timestring : rrd_rpnop_obj_obj_obj
 	}
 }
 
-public class rrd_rpnop_timestamp : rrd_rpnop_double
+public class rrd.rpnop_timestamp : rrd.rpnop_double
 {
 	public override double
 		getValue_double(

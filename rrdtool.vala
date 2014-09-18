@@ -7,7 +7,7 @@ public class rrdtool {
 	{
 
 		/* now create the command we shall use */
-		rrd_command cmd = rrd_command.factorySysArgs(sysargs);
+		rrd.command cmd = rrd.command.factorySysArgs(sysargs);
 
 		/* now execute it */
 		if (cmd != null) {

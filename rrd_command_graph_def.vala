@@ -1,60 +1,60 @@
 using GLib;
 using Gee;
 
-public class rrd_command_graph_def : rrd_argument {
+public class rrd.command_graph_def : rrd.argument {
 
-	protected const rrd_argument_entry[] DEF_ARGUMENT_ENTRIES = {
+	protected const rrd.argument_entry[] DEF_ARGUMENT_ENTRIES = {
 		{ "vname",   0,
-		  "rrd_value_string",
+		  "rrdvalue_string",
 		  null,
 		  true,
 		  "the vname of this data"
 		},
-		{ "rrdfile", 0,
-		  "rrd_value_string",
+		{ "rrdile", 0,
+		  "rrdvalue_string",
 		  null,
 		  true,
 		  "the filename of the rrd file"
 		},
 		{ "dsname",  0,
-		  "rrd_value_string",
+		  "rrdvalue_string",
 		  null,
 		  true,
 		  "the field inside the rrd file"
 		},
 		{ "cf",      0,
-		  "rrd_value_string",
+		  "rrdvalue_string",
 		  "AVG",
 		  true,
 		  "the consolidation function to use"
 		},
 		{ "start",   0,
-		  "rrd_value_rpn",
+		  "rrdvalue_rpn",
 		  "start",
 		  false,
 		  "the start time for the def"
 		},
 		{ "step",   0,
-		  "rrd_value_rpn",
+		  "rrdvalue_rpn",
 		  "step",
 		  false,
 		  "the time steps for the def"
 		},
 		{ "end",   0,
-		  "rrd_value_rpn",
+		  "rrdvalue_rpn",
 		  "end",
 		  false,
 		  "the end time for the def"
 		},
 		{ "reduce",      0,
-		  "rrd_value_string",
+		  "rrdvalue_string",
 		  "",
 		  false,
 		  "the reduction consolidation function to use"
 		}
 	};
 
-	protected override rrd_argument_entry[] getArgumentEntries()
+	protected override rrd.argument_entry[] getArgumentEntries()
 	{ return DEF_ARGUMENT_ENTRIES; }
 
 	protected override bool modifyParsedArguments(
@@ -66,7 +66,7 @@ public class rrd_command_graph_def : rrd_argument {
 		if (hasParsedArgument("vname")) {
 			return true;
 		}
-		if (hasParsedArgument("rrdfile")) {
+		if (hasParsedArgument("rrdile")) {
 			return true;
 		}
 
@@ -95,7 +95,7 @@ public class rrd_command_graph_def : rrd_argument {
 
 		/* so we got key,value, so assign it */
 		setParsedArgument("vname",keyval[0]);
-		setParsedArgument("rrdfile",keyval[1]);
+		setParsedArgument("rrdile",keyval[1]);
 
 		/* as we have been successfull we can strip it
 		 * from the position list now */
@@ -104,42 +104,42 @@ public class rrd_command_graph_def : rrd_argument {
 		return true;
 	}
 
-	protected rrd_value_timestring cached_result = null;
+	protected rrd.value_timestring cached_result = null;
 
-	public override rrd_value? getValue(
-		rrd_command cmd,
-		rrd_rpn_stack? stack = null)
+	public override rrd.value? getValue(
+		rrd.command cmd,
+		rrd.rpn_stack? stack = null)
 	{
 		if (cached_result != null)  {
 			return cached_result;
 		}
 		/* the start/step/end values */
-		rrd_value_timestamp start =
-			(rrd_value_timestamp) getParsedArgumentValue(
+		rrd.value_timestamp start =
+			(rrd.value_timestamp) getParsedArgumentValue(
 				"start", cmd);
-		rrd_value_number step =
-			(rrd_value_number) getParsedArgumentValue(
+		rrd.value_number step =
+			(rrd.value_number) getParsedArgumentValue(
 				"step", cmd);
-		rrd_value_timestamp end =
-			(rrd_value_timestamp) getParsedArgumentValue(
+		rrd.value_timestamp end =
+			(rrd.value_timestamp) getParsedArgumentValue(
 				"end", cmd);
 
 		/* the information that is specific to rrdfile */
-		rrd_value_string rrdfile =
-			(rrd_value_string) getParsedArgumentValue(
-				"rrdfile", cmd);
-		rrd_value_string dsname =
-			(rrd_value_string) getParsedArgumentValue(
+		rrd.value_string rrdfile =
+			(rrd.value_string) getParsedArgumentValue(
+				"rrdile", cmd);
+		rrd.value_string dsname =
+			(rrd.value_string) getParsedArgumentValue(
 				"dsname", cmd);
-		rrd_value_string cf =
-			(rrd_value_string) getParsedArgumentValue(
+		rrd.value_string cf =
+			(rrd.value_string) getParsedArgumentValue(
 				"cf", cmd);
-		rrd_value_string reduce =
-			(rrd_value_string) getParsedArgumentValue(
+		rrd.value_string reduce =
+			(rrd.value_string) getParsedArgumentValue(
 				"cf", cmd);
 
 		/* create the timestring */
-		cached_result = new rrd_value_timestring.init(
+		cached_result = new rrd.value_timestring.init(
 			start,step,end,null);
 
 		/* fill in the timestring */

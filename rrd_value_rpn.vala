@@ -1,10 +1,10 @@
 using GLib;
 using Gee;
 
-public class rrd_value_rpn : rrd_value {
+public class rrd.value_rpn : rrd.value {
 
-	protected rrd_rpn_stack stack = null;
-	protected rrd_value cached_result = null;
+	protected rrd.rpn_stack stack = null;
+	protected rrd.value cached_result = null;
 
 	protected override bool parse_String()
 	{
@@ -16,9 +16,9 @@ public class rrd_value_rpn : rrd_value {
 		return String;
 	}
 
-	public override rrd_value? getValue(
-		rrd_command cmd,
-		rrd_rpn_stack? stack_arg)
+	public override rrd.value? getValue(
+		rrd.command cmd,
+		rrd.rpn_stack? stack_arg)
 	{
 
 		/* if we got it cached, then  return it */
@@ -33,7 +33,7 @@ public class rrd_value_rpn : rrd_value {
 		}
 
 		/* create a new stack */
-		stack=new rrd_rpn_stack();
+		stack=new rrd.rpn_stack();
 		/* then calculate */
 		cached_result = stack.parse(String,cmd);
 

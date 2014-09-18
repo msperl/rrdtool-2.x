@@ -1,24 +1,24 @@
 using GLib;
 using Gee;
 
-public class rrd_command_graph_rpn : rrd_argument {
+public class rrd.command_graph_rpn : rrd.argument {
 
-	protected const rrd_argument_entry[] RPN_ARGUMENT_ENTRIES = {
+	protected const rrd.argument_entry[] RPN_ARGUMENT_ENTRIES = {
 		{ "vname",   0,
-		  "rrd_value_string",
+		  "rrdvalue_string",
 		  null,
 		  true,
 		  "the vname of this data"
 		},
 		{ "rpn", 0,
-		  "rrd_value_rpn",
+		  "rrdvalue_rpn",
 		  null,
 		  true,
 		  "the filename of the rrd file"
 		}
 	};
 
-	protected override rrd_argument_entry[] getArgumentEntries()
+	protected override rrd.argument_entry[] getArgumentEntries()
 	{ return RPN_ARGUMENT_ENTRIES; }
 
 	protected override bool modifyParsedArguments(
@@ -68,10 +68,10 @@ public class rrd_command_graph_rpn : rrd_argument {
 		return true;
 	}
 
-	protected rrd_value cached_result = null;
-	public override rrd_value? getValue(
-		rrd_command cmd,
-		rrd_rpn_stack? stack = null)
+	protected rrd.value cached_result = null;
+	public override rrd.value? getValue(
+		rrd.command cmd,
+		rrd.rpn_stack? stack = null)
 	{
 		/* take from cache */
 		if (cached_result != null)  {
@@ -85,7 +85,7 @@ public class rrd_command_graph_rpn : rrd_argument {
 	}
 
 	protected override void linkToCommandFullName(
-		rrd_command command,
+		rrd.command command,
 		string prefix)
 	{
 		command.setParsedArgument(
