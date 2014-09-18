@@ -12,11 +12,11 @@ BASEDIRS=vapi lib include
 all: $(BASEDIRS) core command $(EXE)
 
 vapi:
-	mkdir -p $<
+	mkdir -p $@
 lib:
-	mkdir -p $<
+	mkdir -p $@
 include:
-	mkdir -p $<
+	mkdir -p $@
 
 clean:  clean_core clean_command
 	rm -f *.o *.c $(EXE)

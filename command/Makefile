@@ -6,8 +6,8 @@ INCDIR=../include
 VAPIDIR=../vapi
 
 CC=gcc
-CFLAGS=-g -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/gee-1.0 -Wall -g -fPIC -I$(INCDIR)
-LDFLAGS=-g -l rrd2_core -pthread -lgee -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0 -lm -L $(LIBDIR)
+CFLAGS=-g -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/gee-1.0 -Wall -g -fPIC -I$(INCDIR) -I/usr/include/cairo
+LDFLAGS=-g -l rrd2_core -lcairo -lpthread -lgee -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0 -lm -L $(LIBDIR)
 
 VALASRC=$(wildcard *.vala */*.vala)
 VALACSRC=$(addprefix $(BUILDBASE)/,$(VALASRC:.vala=.c))
@@ -23,7 +23,7 @@ LIBH=$(LIBNAME).h
 LIBVAPI=$(LIBNAME).vapi
 
 VALAC=valac
-VALAFLAGS=-g --vapidir ../vapi --pkg gee-1.0 --pkg rrd2_core
+VALAFLAGS=-g --vapidir ../vapi --pkg gee-1.0 --pkg rrd2_core --pkg cairo
 VALASHAREDFLAGS=-X -fPIC -X -shared
 
 all: library

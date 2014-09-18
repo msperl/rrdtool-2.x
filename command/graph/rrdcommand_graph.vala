@@ -1,9 +1,11 @@
 using GLib;
 using Gee;
+using Cairo;
 
 public class rrd.command_graph : rrd.command {
-//	protected Cairo.ImageSurface surface = null;
-//	protected Cairo.Context context = null;
+	/* strangely these can be protected or public */
+	private ImageSurface surface = null;
+	private Context context = null;
 
 	protected const rrd.argument_entry[] COMMAND_ARGUMENT_ENTRIES = {
 		{ "imagefile", 0, "rrdvalue_string", null, true,
@@ -43,10 +45,36 @@ public class rrd.command_graph : rrd.command {
 
 	/* the execution method */
 	public override bool execute() {
+		/* depending on full sized mode maybe move things arround
+		 *  worsted case we may need to reparse the whole thing
+		 * to get different defaults...
+		 */
+
+		/* get the effective width and height */
+		int width = 600;
+		int height = 200;
+		/* now create the graph contexts */
+		surface = new ImageSurface(
+			Cairo.Format.RGB24,
+			width,
+			height);
+		context = new Context(surface);
+
+		var imgfile = getParsedArgument("imagefile");
+		stderr.printf("%s\n",imgfile.get_type().name());
+
+		surface.write_to_png(imgfile.to_string());
+
+		/* and start processing */
+
+
 		stderr.printf("rrdcommand_graph.execute()\n");
 		dump();
 
+
+
+		/* try to calculate the effective width and height */
+
 		return true;
 	}
-
 }
