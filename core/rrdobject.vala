@@ -1,26 +1,146 @@
-using GLib;
-using Gee;
+/* rrdobject.vala
+ *
+ * Copyright (C) 2014 Martin Sperl
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ * Martin Sperl <rrdtool@martin.sperl.org>
+ */
+
+/**
+ * the basic class from which all rrd objects are derived
+ * it mainly contains a object factory framework
+ */
 
 public class rrd.object : GLib.Object {
+	/* for error-handling we unfortunately have to make use
+	 * of an depreciated Class in glib (as of 2.32)
+	 * no other way has been found yet
+	 */
+	private static StaticPrivate _rrd_object_error = StaticPrivate();
 
+	/**
+	 * get the current error
+	 *
+	 * @return returns current error or null
+	 */
+	public static rrd.error? getError()
+	{ return (rrd.error) _rrd_object_error.get(); }
+	/**
+	 * set the current error
+	 * @param error the error object to set
+	*/
+	protected static void setError(rrd.error? error)
+	{
+		if (error != null) {
+			GLib.error(
+				"ERROR: %s",
+				error.getString()
+				);
+		}
+		_rrd_object_error.set(error,null);
+	}
+
+	/**
+	 * set the current error if there is no error set already
+	 * @param error the error object to set
+	*/
+	protected static void setErrorIfNull(rrd.error? error)
+	{
+		if(_rrd_object_error.get() == null) {
+			setError(error);
+		}
+	}
+	/**
+	 * clear the rrd error variable
+	 */
+	public static void clearError()
+	{ setError(null); }
+
+
+	/**
+	 * static factory method that instanciates by name
+	 *
+	 * returns a new instance of the requested class name
+	 * checking that the class is a subclass of a certain name
+	 *
+	 * @param class_name the requested classname to instantiate
+	 * @param subclassof a check to see if the requested class
+	 *                    is a subclass of this class
+	 *                    null if no class check is required
+	 * @param key        name of key for glibObject constructor
+	 *                    parameters
+	 * @param value      value for glibObject constructor
+	 *                    parameter
+	 * @param key2       second  name of key for glibObject constructor
+	 *                    parameters
+	 * @param value2     second value for glibObject constructor
+	 *                    parameter
+	 *
+	 * @return the instanciated object of null in case of
+	 *         a missmatch between class_name not being a subclass of
+	 *         subclassof
+	 */
 	public static rrd.object? classFactory(
 		string class_name, string? subclassof,
-		string? key=null, void* value=null)
+		string? key=null, void* value=null,
+		string? key2=null, void* value2=null
+		)
 	{
 		/* so now try to get its class type */
 		Type class_type = getTypeOfClassWithParent(
-			class_name,subclassof);
+			class_name,
+			subclassof);
 		/* use the generic factory */
-		return classFactoryByType(class_type,key,value);
+		return classFactoryByType(
+			class_type,
+			key, value,
+			key2, value2
+			);
 	}
 
+	/**
+	 * static factory method that instanciates by type
+	 *
+	 * returns a new instance of the requested class name
+	 * checking that the class is a subclass of a certain name
+	 *
+	 * @param Type       the requested classtypr
+	 * @param key        name of key for glibObject constructor
+	 *                    parameters
+	 * @param value      value for glibObject constructor
+	 *                    parameter
+	 * @param key2       second  name of key for glibObject constructor
+	 *                    parameters
+	 * @param value2     second value for glibObject constructor
+	 *                    parameter
+	 *
+	 * @return the instanciated object of null in case of
+	 *         an invalid type
+	 */
 	public static rrd.object? classFactoryByType(
 		Type class_type,
 		string? key=null, void* value=null,
 		string? key2=null, void* value2=null
 		)
 	{
-		assert(class_type != Type.INVALID);
+		if (class_type == Type.INVALID) {
+			setErrorIfNull(new rrd.error.string(
+					"invalid type"
+					));
+			return null;
+		}
 		/* now create the class and initialize it
 		 * there may be an easier way, but probably
 		 * not with vala for RH6
@@ -40,15 +160,37 @@ public class rrd.object : GLib.Object {
 				class_type);
 		}
 		if ( obj == null ) {
-			stderr.printf("ERROR: error instantiating %s\n",
-				class_type.name());
+			setErrorIfNull(new rrd.error.string(
+					"ERROR: error instantiating %s\n"
+					.printf(class_type.name())
+					));
 			return null;
 		}
-
-		return obj;
-
+		/* return a potentially delegated sub_class */
+		return (obj==null)? null : obj.delegate();
 	}
 
+	/* delegation of this object to a child based on the arguments given */
+	/**
+	 * create a subclass of this object bases on the already parsed
+	 * arguments
+	 *
+	 * Note that it still requires  the code to get passed the
+	 * "extra arguments" that are needed
+	 *Tthis code needs to parse the optional arguments
+	 *
+	 * @return the current intance or an instance to use instead
+	 */
+	public rrd.object? delegate()
+	{ return this; }
+
+	/**
+	 * check if the given class exists and is a subclass of subclassof
+	 * @param class_name the classname which should get checked
+	 * @param subclassof the class from which class_name should be
+	 *                   derived
+	 * @return the type of the class or Type.INVALID
+	 */
 	public static Type getTypeOfClassWithParent(
 		string class_name, string? subclassof)
 	{
@@ -56,9 +198,18 @@ public class rrd.object : GLib.Object {
 		Type class_type = Type.from_name(class_name);
 
 		/* check that it is an object */
+		if (class_type == Type.INVALID) {
+			setErrorIfNull(new rrd.error.string(
+					"invalid type %s requested"
+					.printf(class_name)
+					));
+			return class_type;
+		}
 		if (!class_type.is_object()) {
-			stderr.printf("ERROR: Could not find class_name %s\n",
-				class_name);
+			setErrorIfNull(new rrd.error.string(
+					"type %s requested can not get instanciated as an object"
+					.printf(class_name)
+					));
 			return Type.INVALID;
 		}
 
@@ -73,8 +224,11 @@ public class rrd.object : GLib.Object {
 				return class_type;
 			}
 		}
+		/*  and error handling if it is not a subtype */
+		setErrorIfNull(new rrd.error.string(
+				"type %s is not a subtype of %s"
+				.printf(class_name,subclassof)
+				));
 		return Type.INVALID;
 	}
-
-
 }
