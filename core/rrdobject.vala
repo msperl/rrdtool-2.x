@@ -24,11 +24,21 @@
  */
 
 public class rrd.object : GLib.Object {
-	/* for error-handling we unfortunately have to make use
-	 * of an depreciated Class in glib (as of 2.32)
-	 * no other way has been found yet
+	/* for error-handling we make use of the Private system
+	 * which provides some thread-local data
 	 */
-	private static StaticPrivate _rrd_object_error = StaticPrivate();
+	/**
+	 * private thread-local member variable for keeping
+	 * error messages
+	 */
+	private static Private _rrd_object_error = new Private(
+		_rrd_object_error_DestroyNotify
+		);
+	/**
+	 * the destructor - not sure if this is "correct" code
+	 */
+	private static void _rrd_object_error_DestroyNotify(void* data)
+	{ ; }
 
 	/**
 	 * get the current error
@@ -37,6 +47,7 @@ public class rrd.object : GLib.Object {
 	 */
 	public static rrd.error? getError()
 	{ return (rrd.error) _rrd_object_error.get(); }
+
 	/**
 	 * set the current error
 	 * @param error the error object to set
@@ -49,7 +60,7 @@ public class rrd.object : GLib.Object {
 				error.getString()
 				);
 		}
-		_rrd_object_error.set(error,null);
+		_rrd_object_error.set(error);
 	}
 
 	/**
@@ -67,7 +78,6 @@ public class rrd.object : GLib.Object {
 	 */
 	public static void clearError()
 	{ setError(null); }
-
 
 	/**
 	 * static factory method that instanciates by name
@@ -167,10 +177,19 @@ public class rrd.object : GLib.Object {
 			return null;
 		}
 		/* return a potentially delegated sub_class */
-		return (obj==null)? null : obj.delegate();
+		var ret = obj.delegate();
+
+		/* if an error is set in a constructor or similar
+		 * then return null
+		 * note that the GLib constructors we use can not throw
+		 * exceptions, so we have to go this route...
+		 */
+		if ( getError() != null ) {
+			ret = null;
+		}
+		return ret;
 	}
 
-	/* delegation of this object to a child based on the arguments given */
 	/**
 	 * create a subclass of this object bases on the already parsed
 	 * arguments
