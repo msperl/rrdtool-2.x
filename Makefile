@@ -37,7 +37,6 @@ $(EXE): $(BASEDIRS) core command $(VALASRC)
 
 test: $(EXE)
 	@rm -f core.*
-	LD_LIBRARY_PATH=lib \
 	./$(EXE) --verbose --debug graph --width 600 --height 300 \
 		dEf:test=/tmp/test.rrd:field1:AVG \
 		'comment:abc\\:cde'

@@ -19,30 +19,39 @@
  */
 
 using Gee;
+
 /**
  * the rrd command object
+ *
+ * from this object all commands are derived
  */
+
 public class rrd.command : rrd.object {
 
 	/**
 	 * the list of arguments to get processed when using
 	 * the GObject constructor
 	 */
-	public ArrayList<string> argsList { get; construct; }
+	public LinkedList<string> argsList { get; construct; }
 	construct {
 		assert(argsList != null);
 		parseArgs(argsList);
 	}
 
-	/* the argument objects in sequence */
-	protected ArrayList<rrd.argument> arg_list =
-		new ArrayList<rrd.argument>();
+	/**
+	 * the parsed positional argument objects in sequence
+	 */
+	protected LinkedList<rrd.argument> arg_list =
+		new LinkedList<rrd.argument>();
 
-	/* the parsed arguments so far */
+	/**
+	 * the parsed positional Arguments so far */
 	protected TreeMap<string,rrd.value> parsed_args =
 		new TreeMap<string,rrd.value>();
 
-	/* the common arguments */
+	/**
+	 * the common arguments during parsing
+	 */
 	protected const rrd.argument_entry[] COMMON_ARGUMENT_ENTRIES = {
 		{ "debug",   0,
 		  "rrdvalue_flag",
@@ -55,7 +64,10 @@ public class rrd.command : rrd.object {
 		  false,
 		  "increase verbosity" }
 	};
-	/* the command options that the implementations have */
+
+	/**
+	 * the command options that the implementations have
+	 */
 	protected virtual rrd.argument_entry[]? getCommandOptions()
 	{ return null; }
 
@@ -63,6 +75,7 @@ public class rrd.command : rrd.object {
 	{
 		parsed_args.set(key,value);
 	}
+
 	public bool hasParsedArgument(string key)
 	{
 		return parsed_args.has_key(key);
@@ -169,7 +182,7 @@ public class rrd.command : rrd.object {
 
 	/* and the positional Argument Parser */
 	protected virtual bool
-		parsePositionalArguments(ArrayList<string> args)
+		parsePositionalArguments(LinkedList<string> args)
 	{
 		/* parse the positional arguments */
 		var command_options = getCommandOptions();
@@ -189,9 +202,11 @@ public class rrd.command : rrd.object {
 							res
 							);
 					} else {
-						stderr.printf("Positional argument"
-							+ "for %s not given\n",
-							entry.name);
+						rrd.error.setErrorString(
+							"Positional argument"
+							+ "for %s not given\n"
+							.printf(entry.name)
+							);
 						return false;
 					}
 				}
@@ -309,7 +324,7 @@ public class rrd.command : rrd.object {
 
 
 	/* the constructor using arguments - public only with subclasses */
-	protected void parseArgs(ArrayList<string> args)
+	protected void parseArgs(LinkedList<string> args)
 	{
 		/* based on the class st values differently */
 		bool ignore_ukn = false;
@@ -380,7 +395,9 @@ public class rrd.command : rrd.object {
 			/* and try to parse everything so far */
 			opt_context.parse(ref args_array);
 		} catch (OptionError e) {
-			stderr.printf ("error: %s\n", e.message);
+			rrd.error.setErrorString("parse.error: %s"
+						.printf(e.message)
+				);
 		}
 
 		/* and convert args_array back to args for the caller
@@ -409,7 +426,7 @@ public class rrd.command : rrd.object {
 	public static rrd.command? factorySysArgs(string[] sysargs)
 	{
 		/* move to args as list */
-		var args=new ArrayList<string>();
+		var args=new LinkedList<string>();
 		for(int i=1;i<sysargs.length;i++) {
 			args.add(sysargs[i]);
 		}
@@ -417,13 +434,13 @@ public class rrd.command : rrd.object {
 		return factory(args);
 	}
 
-	public static rrd.command? factory(ArrayList<string> args)
+	public static rrd.command? factory(LinkedList<string> args)
 	{
-		/* here we need to create a copy of the ArrayList first,
+		/* here we need to create a copy of the LinkedList first,
 		 * as we need to parse/strip the common args first once
 		 * to get to the command
 		 */
-		var args_copy = new ArrayList<string>();
+		var args_copy = new LinkedList<string>();
 		foreach(var arg in args) { args_copy.add(arg); }
 
 		/* now create a generic rrd.command to strip out the
@@ -439,7 +456,8 @@ public class rrd.command : rrd.object {
 		/* now check if we got a command  */
 		if (args_copy.size <1) {
 			/* check if we got help */
-			stderr.printf("Unexpected length"
+			rrd.error.setErrorString(
+				"Unexpected length"
 				+ " - need at least 1 arg as command!\n");
 			return null;
 		}
@@ -450,8 +468,9 @@ public class rrd.command : rrd.object {
 
 		/* also remove the string from the final argument list */
 		if (!args.remove(command)) {
-			stderr.printf("could not find %s in argument list"
-				+ " - it should be there!\n", command);
+			rrd.error.setErrorString(
+			"could not find %s in argument list - it should be there!"
+			.printf(command));
 			return null;
 		}
 

@@ -24,60 +24,6 @@
  */
 
 public class rrd.object : GLib.Object {
-	/* for error-handling we make use of the Private system
-	 * which provides some thread-local data
-	 */
-	/**
-	 * private thread-local member variable for keeping
-	 * error messages
-	 */
-	private static Private _rrd_object_error = new Private(
-		_rrd_object_error_DestroyNotify
-		);
-	/**
-	 * the destructor - not sure if this is "correct" code
-	 */
-	private static void _rrd_object_error_DestroyNotify(void* data)
-	{ ; }
-
-	/**
-	 * get the current error
-	 *
-	 * @return returns current error or null
-	 */
-	public static rrd.error? getError()
-	{ return (rrd.error) _rrd_object_error.get(); }
-
-	/**
-	 * set the current error
-	 * @param error the error object to set
-	*/
-	protected static void setError(rrd.error? error)
-	{
-		if (error != null) {
-			GLib.error(
-				"ERROR: %s",
-				error.getString()
-				);
-		}
-		_rrd_object_error.set(error);
-	}
-
-	/**
-	 * set the current error if there is no error set already
-	 * @param error the error object to set
-	*/
-	protected static void setErrorIfNull(rrd.error? error)
-	{
-		if(_rrd_object_error.get() == null) {
-			setError(error);
-		}
-	}
-	/**
-	 * clear the rrd error variable
-	 */
-	public static void clearError()
-	{ setError(null); }
 
 	/**
 	 * static factory method that instanciates by name
@@ -146,9 +92,7 @@ public class rrd.object : GLib.Object {
 		)
 	{
 		if (class_type == Type.INVALID) {
-			setErrorIfNull(new rrd.error.string(
-					"invalid type"
-					));
+			rrd.error.setErrorStringIfNull("invalid type");
 			return null;
 		}
 		/* now create the class and initialize it
@@ -170,10 +114,10 @@ public class rrd.object : GLib.Object {
 				class_type);
 		}
 		if ( obj == null ) {
-			setErrorIfNull(new rrd.error.string(
-					"ERROR: error instantiating %s\n"
-					.printf(class_type.name())
-					));
+			rrd.error.setErrorStringIfNull(
+				"ERROR: error instantiating %s\n"
+				.printf(class_type.name())
+				);
 			return null;
 		}
 		/* return a potentially delegated sub_class */
@@ -184,7 +128,7 @@ public class rrd.object : GLib.Object {
 		 * note that the GLib constructors we use can not throw
 		 * exceptions, so we have to go this route...
 		 */
-		if ( getError() != null ) {
+		if ( rrd.error.getError() != null ) {
 			ret = null;
 		}
 		return ret;
@@ -218,17 +162,17 @@ public class rrd.object : GLib.Object {
 
 		/* check that it is an object */
 		if (class_type == Type.INVALID) {
-			setErrorIfNull(new rrd.error.string(
-					"invalid type %s requested"
-					.printf(class_name)
-					));
+			rrd.error.setErrorStringIfNull(
+				"invalid type %s requested"
+				.printf(class_name)
+				);
 			return class_type;
 		}
 		if (!class_type.is_object()) {
-			setErrorIfNull(new rrd.error.string(
-					"type %s requested can not get instanciated as an object"
-					.printf(class_name)
-					));
+			rrd.error.setErrorStringIfNull(
+				"type %s requested can not get instanciated as an object"
+				.printf(class_name)
+				);
 			return Type.INVALID;
 		}
 
@@ -244,10 +188,10 @@ public class rrd.object : GLib.Object {
 			}
 		}
 		/*  and error handling if it is not a subtype */
-		setErrorIfNull(new rrd.error.string(
-				"type %s is not a subtype of %s"
-				.printf(class_name,subclassof)
-				));
+		rrd.error.setErrorStringIfNull(
+			"type %s is not a subtype of %s"
+			.printf(class_name,subclassof)
+			);
 		return Type.INVALID;
 	}
 }
