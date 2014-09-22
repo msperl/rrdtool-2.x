@@ -40,7 +40,7 @@ public class rrd.command_graph : rrd.command {
 		}
 	};
 
-	protected override rrd.argument_entry[]? getCommandOptions()
+	protected override rrd.argument_entry[] getCommandOptions()
 	{ return COMMAND_ARGUMENT_ENTRIES; }
 
 	/* the execution method */
@@ -60,21 +60,49 @@ public class rrd.command_graph : rrd.command {
 			height);
 		context = new Context(surface);
 
-		var imgfile = getParsedArgument("imagefile");
-		stderr.printf("%s\n",imgfile.get_type().name());
-
+		var imgfile = getOption("imagefile");
+		if (imgfile == null) {
+			return false;
+		}
 		surface.write_to_png(imgfile.to_string());
 
 		/* and start processing */
 
-
 		stderr.printf("rrdcommand_graph.execute()\n");
 		dump();
-
-
 
 		/* try to calculate the effective width and height */
 
 		return true;
+	}
+
+	public override rrd.object? delegate() {
+		/* handle full size in a special class */
+		if (hasOption("full-size-mode")) {
+			var flag = (rrd.value_flag)
+				getOption("full-size-mode");
+			if ( flag.getBool() ) {
+				return (rrd.command) classFactory(
+					"rrdcommand_graphfullsize",
+					"rrdcommand",
+					"parent",this
+					);
+			}
+		}
+		/* andle only-graph in a special class */
+		if (hasOption("only-graph")) {
+			var flag = (rrd.value_flag)
+				getOption("only-graph");
+			if ( flag.getBool() ) {
+				return (rrd.command) classFactory(
+					"rrdcommand_graphonly",
+					"rrdcommand",
+					"parent",this
+					);
+			}
+		}
+		/* handle others */
+
+		return this;
 	}
 }

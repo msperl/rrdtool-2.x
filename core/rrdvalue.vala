@@ -24,17 +24,12 @@ public abstract class rrd.value : rrd.object {
 		rrd.argument_entry ae,
 		string? value) {
 
-		/* the value */
-		if (value == null) {
-			value = ae.default_value;
-		}
-
 		return factory(ae.class_name,value);
 
 	}
 
 	public static rrd.value? factory(
-		string class_name, string value)
+		string class_name, string? value)
 	{
 		return (rrd.value) rrd.object.classFactory(
 			class_name,
@@ -52,8 +47,9 @@ public class rrd.value_flag : rrd.value {
 
 	protected override bool parse_String()
 	{
+		/* assume a null string means the flag is set */
 		if (String == null) {
-			flag = false;
+			flag = true;
 		} else {
 			flag = (String.to_int() != 0);
 		}
@@ -66,6 +62,10 @@ public class rrd.value_flag : rrd.value {
 
 	public override string? to_string() {
 		return (flag)?"true":"false";
+	}
+
+	public virtual bool getBool() {
+		return flag;
 	}
 }
 

@@ -13,7 +13,7 @@ public class rrd.command_create : rrd.command {
 		}
 	};
 
-	protected override rrd.argument_entry[]? getCommandOptions()
+	protected override rrd.argument_entry[] getCommandOptions()
 	{ return COMMAND_ARGUMENT_ENTRIES; }
 
 	/* the execution method */

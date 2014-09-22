@@ -167,7 +167,7 @@ public class rrd.argument : rrd.value {
 		/* copy debug from global context if it exists
 		 * and we have not set it locally */
 		if (! hasParsedArgument("debug")) {
-			var cmd_debug = command.getParsedArgument("debug")
+			var cmd_debug = command.getOption("debug")
 				?? new rrd.value_flag(false);
 			/* this is an exception */
 			parsed_args.set("debug", cmd_debug);
@@ -185,7 +185,7 @@ public class rrd.argument : rrd.value {
 		/* now set it in the command context
 		 * - this should be a reference */
 		foreach(var kv in parsed_args) {
-			command.setParsedArgument(
+			command.setOption(
 				prefix+"."+kv.key,
 				kv.value);
 		}
@@ -194,7 +194,7 @@ public class rrd.argument : rrd.value {
 	protected virtual void linkToCommandFullName(
 		rrd.command command,
 		string prefix)
-	{ command.setParsedArgument(prefix,this); }
+	{ command.setOption(prefix,this); }
 
 	protected bool parseArgs(ArrayList<string>? arg_list)
 	{

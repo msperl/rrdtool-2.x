@@ -144,7 +144,7 @@ public class rrd.object : GLib.Object {
 	 *
 	 * @return the current intance or an instance to use instead
 	 */
-	public rrd.object? delegate()
+	public virtual rrd.object? delegate()
 	{ return this; }
 
 	/**

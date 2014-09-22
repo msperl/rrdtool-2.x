@@ -88,7 +88,7 @@ public class rrd.command_graph_rpn : rrd.argument {
 		rrd.command command,
 		string prefix)
 	{
-		command.setParsedArgument(
+		command.setOption(
 			prefix,
 			getParsedArgument("rpn")
 			);

@@ -38,6 +38,7 @@ $(EXE): $(BASEDIRS) core command $(VALASRC)
 test: $(EXE)
 	@rm -f core.*
 	./$(EXE) --verbose --debug graph --width 600 --height 300 \
+		--imagefile /tmp/test.png \
 		dEf:test=/tmp/test.rrd:field1:AVG \
 		'comment:abc\\:cde'
 

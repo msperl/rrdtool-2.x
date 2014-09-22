@@ -105,7 +105,7 @@ public class rrd.rpn_stack {
 			/* try to identify the field */
 
 			/* check if it is an existing field */
-			rrd.value entry = cmd.getParsedArgument(field);
+			rrd.value entry = cmd.getOption(field);
 			/* else check if it is a string */
 			if ( entry == null)
 				entry = parseString(field);

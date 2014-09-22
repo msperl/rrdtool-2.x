@@ -36,8 +36,16 @@ public class rrdtool {
 
 		/* now execute it if it is not null */
 		if (cmd != null) {
-			/* and set return value */
-			ret = cmd.execute() ? 0 : 1;
+			/* check for help */
+			rrd.value_flag help =
+				(rrd.value_flag) cmd.getOption("help");
+			if (help.getBool()) {
+				stderr.printf("%s",cmd.getHelp());
+				ret = 127;
+			} else  {
+				/* and set return value */
+				ret = cmd.execute() ? 0 : 1;
+			}
 		} else {
 			ret = 2;
 		}
