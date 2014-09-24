@@ -515,3 +515,47 @@ public class rrd.argument : rrd.value {
 	}
 
 }
+
+/**
+ * cachedargument class, that implements caching on the computation of
+ * getValue
+ */
+public abstract class rrd.argument_cachedGetValue : rrd.argument {
+	/**
+	 * the cached result, so that we do not have to recalculate
+	 * the value every time */
+	protected rrd.value cached_calcValue = null;
+
+	/**
+	 * central rrd.value.getValue implementation
+	 * that does take care of caching the computational data
+	 * @param cmd   the command to which this belongs
+	 * @param stack the rpn_stack to work with - if null, then this is
+	 *              not part of a rpn calculation
+	 * @returns rrd_value with the value given - may be this
+	 */
+	public override rrd.value? getValue(
+		rrd.command cmd,
+		rrd.rpn_stack? stack_arg)
+	{
+		/* if we do not have it cached, then calculate it */
+		if (cached_calcValue == null) {
+			cached_calcValue = calcValue(
+				cmd, stack_arg);
+		}
+		/* and return the cached_value */
+		return cached_calcValue;
+	}
+
+	/**
+	 * abstract calcValue method
+	 * that does the heavy work of computations
+	 * @param cmd   the command to which this belongs
+	 * @param stack the rpn_stack to work with - if null, then this is
+	 *              not part of a rpn calculation
+	 * @returns rrd_value with the value given - may be this
+	 */
+	public abstract rrd.value? calcValue(
+		rrd.command cmd,
+		rrd.rpn_stack? stack_arg);
+}
