@@ -19,7 +19,7 @@ include:
 	mkdir -p $@
 
 clean:  clean_core clean_command
-	rm -f *.o *.c $(EXE)
+	rm -f *.o *.c $(EXE) core.[0-9]*
 	rm -rf vapi lib include
 
 core::

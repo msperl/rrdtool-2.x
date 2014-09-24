@@ -37,9 +37,9 @@ public class rrdtool {
 		/* now execute it if it is not null */
 		if (cmd != null) {
 			/* check for help */
-			rrd.value_flag help =
-				(rrd.value_flag) cmd.getOption("help");
-			if (help.getBool()) {
+			rrd.value_bool help =
+				(rrd.value_bool) cmd.getOption("help");
+			if (help.to_bool()) {
 				stderr.printf("%s",cmd.getHelp());
 				ret = 127;
 			} else  {

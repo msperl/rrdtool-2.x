@@ -29,10 +29,10 @@ public class rrd.command_graph : rrd.command {
 		{ "end", 'e', "rrdvalue_timestamp", "now", false,
 		  "end time", "<timestamp>"
 		},
-		{ "only-graph", 'j', "rrdvalue_flag", "0", false,
+		{ "only-graph", 'j', "rrdvalue_bool", "false", false,
 		  "only create the graph"
 		},
-		{ "full-size-mode", 'D', "rrdvalue_flag", "0", false,
+		{ "full-size-mode", 'D', "rrdvalue_bool", "false", false,
 		  "do the frame calculation based on global sizes"
 		},
 		{ "title", 't', "rrdvalue_string", null, false,
@@ -79,9 +79,9 @@ public class rrd.command_graph : rrd.command {
 	public override rrd.object? delegate() {
 		/* handle full size in a special class */
 		if (hasOption("full-size-mode")) {
-			var flag = (rrd.value_flag)
+			var flag = (rrd.value_bool)
 				getOption("full-size-mode");
-			if ( flag.getBool() ) {
+			if ( flag.to_bool() ) {
 				return (rrd.command) classFactory(
 					"rrdcommand_graphfullsize",
 					"rrdcommand",
@@ -91,9 +91,9 @@ public class rrd.command_graph : rrd.command {
 		}
 		/* andle only-graph in a special class */
 		if (hasOption("only-graph")) {
-			var flag = (rrd.value_flag)
+			var flag = (rrd.value_bool)
 				getOption("only-graph");
-			if ( flag.getBool() ) {
+			if ( flag.to_bool() ) {
 				return (rrd.command) classFactory(
 					"rrdcommand_graphonly",
 					"rrdcommand",

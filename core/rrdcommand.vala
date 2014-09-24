@@ -107,18 +107,18 @@ public class rrd.command : rrd.object {
 	 */
 	protected const rrd.argument_entry[] COMMON_ARGUMENT_ENTRIES = {
 		{ "help",  '?',
-		  "rrdvalue_flag",
-		  "0",
+		  "rrdvalue_bool",
+		  "false",
 		  false,
 		  "help flag" },
 		{ "debug",   0,
-		  "rrdvalue_flag",
-		  "0",
+		  "rrdvalue_bool",
+		  "false",
 		  false,
 		  "enable debugging" },
 		{ "verbose", 'v',
-		  "rrdvalue_flag",
-		  "0",
+		  "rrdvalue_bool",
+		  "false",
 		  false,
 		  "increase verbosity" }
 	};
@@ -330,7 +330,7 @@ public class rrd.command : rrd.object {
 				} else {
 					rrd.error.setErrorString(
 						"Positional argument"
-						+ "for %s not given\n"
+						+ "for %s not given"
 						.printf(entry.name)
 						);
 					return false;
@@ -578,7 +578,7 @@ public class rrd.command : rrd.object {
 			/* check if we got help */
 			rrd.error.setErrorString(
 				"Unexpected length"
-				+ " - need at least 1 arg as command!\n");
+				+ " - need at least 1 arg as command!");
 			return null;
 		}
 		/* now get the command itself in lower case

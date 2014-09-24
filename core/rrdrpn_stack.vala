@@ -1,15 +1,50 @@
-using GLib;
+/* rrdrpn_stack.vala
+ *
+ * Copyright (C) 2014 Martin Sperl
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ * Martin Sperl <rrdtool@martin.sperl.org>
+ */
 using Gee;
 
+/**
+ * rpn stack implementation
+ */
 public class rrd.rpn_stack {
+	/**
+	 * member variable that contains the linked list that is the stack
+	 */
 	protected LinkedList<rrd.value> stack = null;
-	string stack_str = null;
-	rrd.command cmd = null;
+	/**
+	 * member variable that contains the original rpn definition
+	 * to processing
+	 */
+	protected string rpn_str = null;
+	/**
+	 * member variable cmd, which contains the reference to the
+	 * command to which the stack belongs
+	 */
+	protected rrd.command cmd = null;
 
+	/**
+	 * dump the stack
+	 */
 	public void dump()
 	{
 		stderr.printf("rrdrpn_stack.dump():\n");
-		stderr.printf("String: %s\n",stack_str);
+		stderr.printf("String: %s\n",rpn_str);
 
 		foreach(var entry in stack) {
 			stderr.printf("\t(%s) %s\n",
@@ -19,12 +54,19 @@ public class rrd.rpn_stack {
 		}
 	}
 
-	/* the public parse method */
-	public rrd.value? parse(string arg, rrd.command command) {
+	/**
+	 * parse the string and create it inot a stack object
+	 * @param rpn     the rpn string to parse
+	 * @param command the command for which we run this
+	 * @return the result rrd.value object
+	 */
+	public rrd.value? parse(string rpn, rrd.command command)
+	{
 		/* set the values */
-		stack_str = arg;
+		rpn_str = rpn;
 		cmd = command;
-		/* create the stack */
+
+		/* create the stack linked list*/
 		stack = new LinkedList<rrd.value>();
 
 		/* split the values */
@@ -38,19 +80,25 @@ public class rrd.rpn_stack {
 		/* if the stack is not empty, then complain */
 		if (stack.size > 0) {
 			stderr.printf(
-				"Stack of %s is not empty after processing\n",
-				stack_str
+				"Stack of %s is not empty after processing",
+				rpn_str
 				);
 			result = null;
 		}
-
-		/* then parse for real */
+		/* return the result */
 		return result;
 	}
 
-	protected rrd.value_string? parseString(string field) {
+	/**
+	 * try to parse the field to a string
+	 * and return the corresponding rrd.value_string
+	 * @param field the field to parse
+	 * @return the created object corresponding to field
+	 */
+	protected rrd.value_string? parseString(string field)
+	{
+		/* field must be at least 2 because of quotes */
 		var len= field.length;
-		/* field must be at least 2 */
 		if (len < 2) {
 			return null;
 		}
@@ -77,8 +125,12 @@ public class rrd.rpn_stack {
 		}
 		return null;
 	}
-
-	protected rrd.value_number? parseNumber(string field) {
+	/**
+	 * try to parse the field to a number
+	 * and return the corresponding rrd.value_number
+	 */
+	protected rrd.value_number? parseNumber(string field)
+	{
 		double val = 0;
 		if (strcmp(field,"NAN")==0) {
 			return new rrd.value_number.double(val.NAN);
@@ -94,19 +146,28 @@ public class rrd.rpn_stack {
 		return null;
 	}
 
-	protected rrd.rpnop? parseOperator(string field) {
-		return  rrd.rpnop.factory(field);
+	/**
+	 * try to parse the field to an operator
+	 * and return the corresponding rrd.rpnop
+	 */
+	protected rrd.rpnop? parseOperator(string field)
+	{
+		return rrd.rpnop.factory(field);
 	}
 
+	/**
+	 * split the fields and try to parse them
+	 * @return true on success
+	 */
 	protected bool split()
 	{
 		/* iterate the split values */
-		foreach(var field in stack_str.split(",")) {
+		foreach(var field in rpn_str.split(",")) {
 			/* try to identify the field */
 
 			/* check if it is an existing field */
 			rrd.value entry = cmd.getOption(field);
-			/* else check if it is a string */
+			/* check if it is a string */
 			if ( entry == null)
 				entry = parseString(field);
 			/* else check if it is a number */
@@ -115,42 +176,60 @@ public class rrd.rpn_stack {
 			/* else check if it is an operator */
 			if ( entry == null)
 				entry = parseOperator(field);
-
 			/* if we are still empty then return an error */
 			if (entry == null) {
-				stderr.printf(
-					"RPN operator %s not found"
-					+"\n in rpn: %s\n",
-					field,
-					stack_str);
+			rrd.error.setErrorString(
+				"RPN operator %s not found in rpn: %s"
+				.printf(field, rpn_str)
+				);
 				return false;
 			} else {
 				/* otherwise add it to the stack */
 				push(entry);
 			}
 		}
+		/* clear the errors, that have happened */
+		rrd.error.clearError();
+		/* and return success */
 		return true;
 	}
 
+	/**
+	 * process the stack
+	 * @return rrd.value or null as the result
+	 */
 	protected rrd.value? process() {
 		/* pop a value from stack */
 		rrd.value top = pop();
 		if (top == null) {
+			rrd.error.setErrorString(
+				"not enough arguments on stack"
+				);
 			return null;
 		}
-		/* and return the value */
+		/* and return the value by calling getValue */
 		return top.getValue(cmd,this);
 	}
 
+	/**
+	 * pop an item from stack
+	 * @return rrd.value or null
+	 */
 	public rrd.value? pop() {
 		if (stack.size>0) {
 			return stack.poll_tail();
 		} else {
-			stderr.printf("Stack empty\n");
+			rrd.error.setErrorString(
+				"not enough arguments on stack"
+				);
 			return null;
 		}
 	}
-	public void push(rrd.value val) {
-		stack.offer_tail(val);
+	/**
+	 * push a value onto the stack
+	 * @param value
+	 */
+	public void push(rrd.value value) {
+		stack.offer_tail(value);
 	}
 }

@@ -1,4 +1,22 @@
-using GLib;
+/* rrdcommand_graph_rpn.vala
+ *
+ * Copyright (C) 2014 Martin Sperl
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ * Martin Sperl <rrdtool@martin.sperl.org>
+ */
 using Gee;
 
 public class rrd.command_graph_rpn : rrd.argument {
@@ -21,16 +39,16 @@ public class rrd.command_graph_rpn : rrd.argument {
 	protected override rrd.argument_entry[] getArgumentEntries()
 	{ return RPN_ARGUMENT_ENTRIES; }
 
-	protected override bool modifyParsedArguments(
-		ArrayList<string> positional)
+	protected override bool modifyOptions(
+		LinkedList<string> positional)
 	{
 		/* check if rrdfile and vname are defined
 		 * then the "normal" positional rules apply
 		 */
-		if (hasParsedArgument("vname")) {
+		if (hasOption("vname")) {
 			return true;
 		}
-		if (hasParsedArgument("rpn")) {
+		if (hasOption("rpn")) {
 			return true;
 		}
 
@@ -58,8 +76,8 @@ public class rrd.command_graph_rpn : rrd.argument {
 		}
 
 		/* so we got key,value, so assign it */
-		setParsedArgument("vname",keyval[0]);
-		setParsedArgument("rpn",keyval[1]);
+		setOption("vname",keyval[0]);
+		setOption("rpn",keyval[1]);
 
 		/* as we have been successfull we can strip it
 		 * from the position list now */
@@ -78,7 +96,7 @@ public class rrd.command_graph_rpn : rrd.argument {
 			return cached_result;
 		}
 		/* otherwise take from rpn itself */
-		cached_result = getParsedArgumentValue("rpn",cmd);
+		cached_result = getOptionValue("rpn",cmd);
 
 		/* and return it */
 		return cached_result;
@@ -90,7 +108,7 @@ public class rrd.command_graph_rpn : rrd.argument {
 	{
 		command.setOption(
 			prefix,
-			getParsedArgument("rpn")
+			getOption("rpn")
 			);
 	}
 

@@ -1,72 +1,168 @@
-using GLib;
+/* rrdobject.vala
+ *
+ * Copyright (C) 2014 Martin Sperl
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ * Martin Sperl <rrdtool@martin.sperl.org>
+ */
 using Gee;
 
+/**
+ * structure containing the argument option flags
+ */
 public struct rrd.argument_entry {
+	/**
+	 * the long name of the option - e.g --<name>
+	 */
 	public unowned string    name;
+	/**
+	 * the short name of the option - e.g -<short_name>
+	 */
 	public char              short_name;
+	/**
+	 * the class name of the object to generate for this object
+	 */
 	public string            class_name;
+	/**
+	 * the default value to set when not set as option
+	 */
 	public string            default_value;
+	/**
+	 * flag if it is a positional argument
+	 * if so, then the order is important
+	 */
 	public bool              is_positional;
+	/**
+	 * the description string
+	 */
 	public unowned string    description;
+	/**
+	 * the argument description
+	 */
 	public unowned string    arg_description;
 }
 
-public class rrd.argument : rrd.value {
-        public ArrayList<string> argsList { get; construct; }
+/**
+ * the (positional) argument class
+ */
+public abstract class rrd.argument : rrd.value {
+	/**
+	 * constructor argument list of arguments to this argument
+	 */
+        public LinkedList<string> argsList { get; construct; }
+	/**
+	 * constructor
+	 */
         construct {
 		assert(argsList != null);
 		parseArgs(argsList);
         }
+	/**
+	 * execute method
+	 * the default implementation does nothing
+	 * @param cmd the command for which we run
+	 * @return true on success
+	 */
+	public bool execute(rrd.command cmd)
+	{ return true ; }
 
-	public bool execute(rrd.command cmd) {
-		return true;
+	/**
+	 * the parsed options as a map for quick access.
+	 * this also contains the options of arguments,
+	 * so that the parameters of those can also get
+	 * used for rpn calculations
+	 */
+	protected TreeMap<string,rrd.value> options;
+
+	/**
+	 * check if we have an option
+	 * @param key the key to check
+	 * @return if the key exists in the list of options
+	 */
+	public bool hasOption(string key)
+	{ return options.has_key(key); }
+
+	/**
+	 * get the option with name key
+	 * @param key the key to check
+	 * @return thr option rrd_value for key
+	 */
+	public rrd.value? getOption(string key)
+	{
+		if (options.has_key(key)) {
+			return options.get(key);
+		}
+		return null;
 	}
 
-	private TreeMap<string,rrd.value> parsed_args;
-
-	public bool hasParsedArgument(string key)
-	{ return parsed_args.has_key(key); }
-
-	public rrd.value? getParsedArgument(string key)
-	{ return parsed_args.get(key); }
-
-	public rrd.value? getParsedArgumentValue(
+	/**
+	 * get the option value with name key
+	 * @param key the key to check
+	 * @return thr option rrd_value for key
+	 */
+	public rrd.value? getOptionValue(
 		string key, rrd.command cmd)
 	{
-		rrd.value res = getParsedArgument(key);
+		rrd.value res = getOption(key);
 		if (res != null) {
 			return res.getValue(cmd,null);
 		}
 		return res;
 	}
 
-	protected bool setParsedArgument(string key, string value) {
+	/**
+	 * set option key to value
+	 * @param key the key to set
+	 * @param value the value to set
+	 * @return status if OK
+	 */
+	protected bool setOption(string key, string value)
+	{
 		/* create a new class */
 		rrd.value val = getClassForKey(key,value);
 		/* if it is set, then it is in entries */
 		if (val != null) {
-			parsed_args.set(key,val);
+			options.set(key,val);
 			return true;
 		} else {
 			return false;
 		}
 	}
 
+	/**
+	 * dump the argument info
+	 */
 	public void dump() {
 		stderr.printf("%s.dump():\n",get_type().name());
-		foreach(var arg in parsed_args) {
+		foreach(var arg in options) {
 			stderr.printf("   Parsed arg: %s = %s\n",
 				arg.key,arg.value.to_string());
 		}
 	}
 
-	/* our own split_colon method
-	 * that also takes care of escaped colons */
-	protected static ArrayList<string>? split_colon(string arg) {
-		/* move it to an ArrayList on split
+	/**
+	 * split_colon method, that also takes care of escaped colons
+	 * @param arg the string which we should split
+	 * @return list of asplit objects
+	 */
+	protected static LinkedList<string>? split_colon(string arg)
+	{
+		/* move it to an LinkedList on split
 		 * but also join the ones that have been escaped
 		 */
-		var arglist = new ArrayList<string>();
+		var arglist = new LinkedList<string>();
 		string merged = "";
 		foreach(var str in arg.split(":")) {
 			/* find trailing escape,
@@ -101,10 +197,16 @@ public class rrd.argument : rrd.value {
 		return arglist;
 	}
 
-	/* the factory that transforms a positional argument
-	 * into an object */
+	/**
+	 * the factory that transforms a positional argument
+	 * into an object
+	 * @param command the command for which we do this
+	 * @param cmdstr  the string which we need to parse
+	 * @return rrd.command object or null
+	 */
 	public static new rrd.argument? factory(
-		rrd.command command, string cmdstr) {
+		rrd.command command, string cmdstr)
+	{
 
 		/* split into a list */
 		var split = split_colon(cmdstr);
@@ -143,34 +245,51 @@ public class rrd.argument : rrd.value {
 		/* get the (base classname) for the classname */
 		var base_class=command.get_type().name();
 
-		/* and now create the Class object */
-		rrd.argument argclass =
-			(rrd.argument) rrd.object.classFactory(
+		/* and now create the Class object
+		 * - this has delegate implemented!!!
+		 */
+		return (rrd.argument) classFactory(
 				base_class + "_" + cmdname,
 				"rrdargument",
 				"argsList",split);
-
-		return argclass;
 	}
 
+	/**
+	 * the default empty list of argument entries
+	 */
 	protected const rrd.argument_entry[] DEFAULT_ARGUMENT_ENTRIES =
 		{ };
 
+	/**
+	 * get the relevant argument entries
+	 * @return rrd.argument_entry array
+	 */
 	protected virtual rrd.argument_entry[] getArgumentEntries()
 	{ return DEFAULT_ARGUMENT_ENTRIES; }
 
-	protected virtual bool modifyParsedArguments(
-		ArrayList<string> positional)
+	/**
+	 * virtual method that allows for modifications
+	 * prior to parsing positional arguments
+	 * @param list of positional arguments
+	 * @returns true on success
+	 */
+	protected virtual bool modifyOptions(
+		LinkedList<string> positional)
 	{ return true; }
 
+	/**
+	 * links the rrd.argument with rrd.command
+	 * which includes copying over data to global options
+	 * @param command the command to which we should link
+	 */
 	public void linkToCommand(rrd.command command) {
 		/* copy debug from global context if it exists
 		 * and we have not set it locally */
-		if (! hasParsedArgument("debug")) {
+		if (! hasOption("debug")) {
 			var cmd_debug = command.getOption("debug")
-				?? new rrd.value_flag(false);
+				?? new rrd.value_bool.bool(false);
 			/* this is an exception */
-			parsed_args.set("debug", cmd_debug);
+			options.set("debug", cmd_debug);
 		}
 
 		/* now link it in command context
@@ -182,26 +301,36 @@ public class rrd.argument : rrd.value {
 		/* link the argument itself */
 		linkToCommandFullName(command,prefix);
 
-		/* now set it in the command context
-		 * - this should be a reference */
-		foreach(var kv in parsed_args) {
+		/* now set our options in the command context
+		 * - this should be a reference
+		 */
+		foreach(var kv in options) {
 			command.setOption(
 				prefix+"."+kv.key,
 				kv.value);
 		}
 	}
 
+	/**
+	 * activity linking ourselves to the command with the given prefix
+	 * @param command the command to which we should link
+	 * @param the prefix we should use for this linking
+	 */
 	protected virtual void linkToCommandFullName(
 		rrd.command command,
 		string prefix)
 	{ command.setOption(prefix,this); }
 
-	protected bool parseArgs(ArrayList<string>? arg_list)
+	/**
+	 * parse linked list of unhandled args
+	 * and put them into context
+	 */
+	protected bool parseArgs(LinkedList<string>? arg_list)
 	{
 		/* list of positional=unhandled args */
-		var pos_args = new ArrayList<string>();
+		var pos_args = new LinkedList<string>();
 		/* initialize map of keys */
-		parsed_args = new TreeMap<string,rrd.value>();
+		options = new TreeMap<string,rrd.value>();
 
 		/* now parse the args */
 		foreach(var arg in arg_list) {
@@ -216,10 +345,10 @@ public class rrd.argument : rrd.value {
 				var value = keyvalue[1];
 				rrd.value val = null;
 				if (strcmp(key,"debug") == 0) {
-					val = new rrd.value_flag(true);
-					parsed_args.set(key,val);
+					val = new rrd.value_bool.bool(true);
+					options.set(key,val);
 				} else {
-					if (! setParsedArgument(key,value)) {
+					if (! setOption(key,value)) {
 						pos_args.add(arg);
 					}
 				}
@@ -229,7 +358,7 @@ public class rrd.argument : rrd.value {
 		/* do some customized translations
 		 * prior to the default positional parser
 		 */
-		if (! modifyParsedArguments(pos_args) ) {
+		if (! modifyOptions(pos_args) ) {
 			return false;
 		}
 
@@ -238,12 +367,12 @@ public class rrd.argument : rrd.value {
 		var entries = getArgumentEntries();
 
 		foreach(var entry in entries) {
-			if (hasParsedArgument(entry.name)) {
+			if (hasOption(entry.name)) {
 				/* do nothing */
 			} else if (entry.is_positional) {
 				if (pos_args.size>0) {
 					/* create a new class */
-					setParsedArgument(
+					setOption(
 						entry.name,
 						pos_args.remove_at(0)
 						);
@@ -256,7 +385,7 @@ public class rrd.argument : rrd.value {
 			} else {
 				/* set the default */
 				if (entry.default_value != null) {
-					setParsedArgument(
+					setOption(
 						entry.name,
 						entry.default_value
 						);
@@ -283,7 +412,7 @@ public class rrd.argument : rrd.value {
 		}
 
 		/* dump what we have found */
-		if (parsed_args.get("debug")!=null)  {
+		if (options.get("debug")!=null)  {
 			dump();
 		}
 
@@ -291,22 +420,28 @@ public class rrd.argument : rrd.value {
 		return true;
 	}
 
-	/* by default try to use "name", "vname" or "id" */
+	/**
+	 * get the prefix to use on the command context
+	 * by default try to use "name", "vname" or "id"
+	 * @param cmd the command to which we link
+	 */
 	protected virtual string getPrefixName(
 		rrd.command cmd) {
 		/* some defaults to minimize coding */
-		if (hasParsedArgument("name")) {
-			return getParsedArgument("name").to_string();
-		} else if (hasParsedArgument("vname")) {
-			return getParsedArgument("vname").to_string();
-		} else if (hasParsedArgument("id")) {
-			return getParsedArgument("id").to_string();
+		if (hasOption("name")) {
+			return getOption("name").to_string();
+		} else if (hasOption("vname")) {
+			return getOption("vname").to_string();
+		} else if (hasOption("id")) {
+			return getOption("id").to_string();
 		} else {
 			/* otherwise we get the generated version */
 			return cmd.getNewName(get_type().name());
 		}
 	}
 
+	/**
+	 */
 	protected bool haveArgumentEntry(
 		rrd.argument_entry[] entries, string key)
 	{
@@ -347,13 +482,9 @@ public class rrd.argument : rrd.value {
 		return obj;
 	}
 
-	public override bool parse_String()
-	{
-		return false;
-	}
+	public override void parse_String()
+	{ ; }
 
 	public override string? to_string()
-	{
-		return "TODO";
-	}
+	{ return "TODO"; }
 }

@@ -1,4 +1,23 @@
-using GLib;
+
+/* rrdcommand_graph_def.vala
+ *
+ * Copyright (C) 2014 Martin Sperl
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ * Martin Sperl <rrdtool@martin.sperl.org>
+ */
 using Gee;
 
 public class rrd.command_graph_def : rrd.argument {
@@ -57,16 +76,16 @@ public class rrd.command_graph_def : rrd.argument {
 	protected override rrd.argument_entry[] getArgumentEntries()
 	{ return DEF_ARGUMENT_ENTRIES; }
 
-	protected override bool modifyParsedArguments(
-		ArrayList<string> positional)
+	protected override bool modifyOptions(
+		LinkedList<string> positional)
 	{
 		/* check if rrdfile and vname are defined
 		 * then the "normal" positional rules apply
 		 */
-		if (hasParsedArgument("vname")) {
+		if (hasOption("vname")) {
 			return true;
 		}
-		if (hasParsedArgument("rrdile")) {
+		if (hasOption("rrdile")) {
 			return true;
 		}
 
@@ -94,8 +113,8 @@ public class rrd.command_graph_def : rrd.argument {
 		}
 
 		/* so we got key,value, so assign it */
-		setParsedArgument("vname",keyval[0]);
-		setParsedArgument("rrdile",keyval[1]);
+		setOption("vname",keyval[0]);
+		setOption("rrdile",keyval[1]);
 
 		/* as we have been successfull we can strip it
 		 * from the position list now */
@@ -115,28 +134,28 @@ public class rrd.command_graph_def : rrd.argument {
 		}
 		/* the start/step/end values */
 		rrd.value_timestamp start =
-			(rrd.value_timestamp) getParsedArgumentValue(
+			(rrd.value_timestamp) getOptionValue(
 				"start", cmd);
 		rrd.value_number step =
-			(rrd.value_number) getParsedArgumentValue(
+			(rrd.value_number) getOptionValue(
 				"step", cmd);
 		rrd.value_timestamp end =
-			(rrd.value_timestamp) getParsedArgumentValue(
+			(rrd.value_timestamp) getOptionValue(
 				"end", cmd);
 
 		/* the information that is specific to rrdfile */
 		rrd.value_string rrdfile =
-			(rrd.value_string) getParsedArgumentValue(
+			(rrd.value_string) getOptionValue(
 				"rrdile", cmd);
 		rrd.value_string dsname =
-			(rrd.value_string) getParsedArgumentValue(
+			(rrd.value_string) getOptionValue(
 				"dsname", cmd);
 		rrd.value_string cf =
-			(rrd.value_string) getParsedArgumentValue(
+			(rrd.value_string) getOptionValue(
 				"cf", cmd);
 		rrd.value_string reduce =
-			(rrd.value_string) getParsedArgumentValue(
-				"cf", cmd);
+			(rrd.value_string) getOptionValue(
+				"reduce", cmd);
 
 		/* create the timestring */
 		cached_result = new rrd.value_timestring.init(

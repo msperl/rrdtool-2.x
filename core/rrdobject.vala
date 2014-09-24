@@ -115,7 +115,7 @@ public class rrd.object : GLib.Object {
 		}
 		if ( obj == null ) {
 			rrd.error.setErrorStringIfNull(
-				"ERROR: error instantiating %s\n"
+				"ERROR: error instantiating %s"
 				.printf(class_type.name())
 				);
 			return null;
