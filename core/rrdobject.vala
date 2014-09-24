@@ -120,6 +120,11 @@ public class rrd.object : GLib.Object {
 				);
 			return null;
 		}
+		/* if we got an error, then return null */
+		if (rrd.error.getError()!= null) {
+			return null;
+		}
+
 		/* return a potentially delegated sub_class */
 		var ret = obj.delegate();
 
