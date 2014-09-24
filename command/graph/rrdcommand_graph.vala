@@ -77,32 +77,40 @@ public class rrd.command_graph : rrd.command {
 	}
 
 	public override rrd.object? delegate() {
-		/* handle full size in a special class */
-		if (hasOption("full-size-mode")) {
-			var flag = (rrd.value_bool)
-				getOption("full-size-mode");
-			if ( flag.to_bool() ) {
-				return (rrd.command) classFactory(
-					"rrdcommand_graphfullsize",
-					"rrdcommand",
-					"parent",this
-					);
-			}
-		}
-		/* andle only-graph in a special class */
-		if (hasOption("only-graph")) {
-			var flag = (rrd.value_bool)
-				getOption("only-graph");
-			if ( flag.to_bool() ) {
-				return (rrd.command) classFactory(
-					"rrdcommand_graphonly",
-					"rrdcommand",
-					"parent",this
-					);
-			}
-		}
-		/* handle others */
+		string cname=this.get_type().name();
 
+		if( strcmp(cname,"rrdcommand_graph") == 0) {
+			/* handle full size in a special class */
+			if (hasOption("full-size-mode")) {
+				var flag = (rrd.value_bool)
+					getOption("full-size-mode");
+				if ( flag.to_bool() ) {
+					return (rrd.command) classFactory(
+						"rrdcommand_graphfullsize",
+						"rrdcommand",
+						"parent",this
+						);
+				}
+			}
+			/* andle only-graph in a special class */
+			if (hasOption("only-graph")) {
+				var flag = (rrd.value_bool)
+					getOption("only-graph");
+				if ( flag.to_bool() ) {
+					return (rrd.command) classFactory(
+						"rrdcommand_graphonly",
+						"rrdcommand",
+						"parent",this
+						);
+				}
+			}
+		}
+		/* parse the remaining positional arguments */
+		if (! parsePositionalArguments()) {
+			/* on error return null */
+			return null;
+		}
+		/* return this */
 		return this;
 	}
 }

@@ -150,6 +150,10 @@ public abstract class rrd.argument : rrd.value {
 			stderr.printf("   Parsed arg: %s = %s\n",
 				arg.key,arg.value.to_string());
 		}
+		foreach(var p in argsList) {
+			stderr.printf("   ArgList: %s\n",p);
+		}
+
 	}
 
 	/**
@@ -189,7 +193,7 @@ public abstract class rrd.argument : rrd.value {
 		}
 		/* if we got a "trailing" \, then there is something wrong */
 		if (merged != "") {
-			stderr.printf(
+			rrd.error.setErrorString(
 				"Error: unterminated escape \\ string\n");
 			return null;
 		}
@@ -344,6 +348,7 @@ public abstract class rrd.argument : rrd.value {
 				var key = keyvalue[0];
 				var value = keyvalue[1];
 				rrd.value val = null;
+				/* hardcoded debug */
 				if (strcmp(key,"debug") == 0) {
 					val = new rrd.value_bool.bool(true);
 					options.set(key,val);
@@ -377,9 +382,10 @@ public abstract class rrd.argument : rrd.value {
 						pos_args.remove_at(0)
 						);
 				} else {
-					stderr.printf("Positional argument"
-						+ "for %s not given\n",
-						entry.name);
+					rrd.error.setErrorString(
+						"Positional argument for %s not given"
+						.printf(entry.name)
+						);
 					return false;
 				}
 			} else {
@@ -390,9 +396,10 @@ public abstract class rrd.argument : rrd.value {
 						entry.default_value
 						);
 				} else {
-					stderr.printf("Missing argument"
-						+ "- no default value for %s\n",
-						entry.name);
+					rrd.error.setErrorString(
+						"missing argument for %s"
+						.printf(entry.name)
+						);
 				}
 			}
 		}
@@ -405,9 +412,10 @@ public abstract class rrd.argument : rrd.value {
 				unclaimed += ((i>0) ? ":" : "")
 					+ pos_args.get(i);
 			}
-			stderr.printf(
-				"Unclaimed positional arguments: %s\n",
-				unclaimed);
+			rrd.error.setErrorString(
+				"Unclaimed arguments: %s"
+				.printf(unclaimed)
+				);
 			return false;
 		}
 
@@ -441,25 +449,17 @@ public abstract class rrd.argument : rrd.value {
 	}
 
 	/**
+	 * get the argument_entry that fits the name
+	 * @param name
+	 * @return rrd.argument_entry that matches or null
 	 */
-	protected bool haveArgumentEntry(
-		rrd.argument_entry[] entries, string key)
-	{
-		foreach(var entry in entries) {
-			if (strcmp(entry.name,key) == 0) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	protected rrd.argument_entry? getArgumentEntry(string name)
 	{
 		/* get the arg info for this class */
 		var entries = getArgumentEntries();
 		/* iterate to find */
 		foreach(var ae in entries) {
-			if (strcmp(ae.name,name)==0) {
+			if (strcmp(ae.name,name) == 0) {
 				return ae;
 			}
 		}
@@ -467,6 +467,13 @@ public abstract class rrd.argument : rrd.value {
 		return null;
 	}
 
+	/**
+	 * creates new value object with name and value
+	 * this is based on the argument_entries defined
+	 * @param name the name of the field for which to create the object
+	 * @param value the value (as a string) to assign to the object
+	 * @return rrd.value or null
+	 */
 	protected rrd.value? getClassForKey(
 		string name, string value)
 	{

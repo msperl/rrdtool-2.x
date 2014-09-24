@@ -39,6 +39,14 @@ public class rrd.command_graph_rpn : rrd.argument {
 	protected override rrd.argument_entry[] getArgumentEntries()
 	{ return RPN_ARGUMENT_ENTRIES; }
 
+	/**
+	 * prepare for positional arguments
+	 * splitting/filling in some fields from positional arguments.
+	 * the reason is the name=rpn convention, where
+	 * name is not predictable.
+	 * @param postitional the positional/unparsed arguments
+	 * @return true if no issues
+	 */
 	protected override bool modifyOptions(
 		LinkedList<string> positional)
 	{

@@ -1,4 +1,3 @@
-
 /* rrdcommand_graph_def.vala
  *
  * Copyright (C) 2014 Martin Sperl
@@ -29,13 +28,13 @@ public class rrd.command_graph_def : rrd.argument {
 		  true,
 		  "the vname of this data"
 		},
-		{ "rrdile", 0,
+		{ "rrdfile", 0,
 		  "rrdvalue_string",
 		  null,
 		  true,
 		  "the filename of the rrd file"
 		},
-		{ "dsname",  0,
+		{ "rrdfield",  0,
 		  "rrdvalue_string",
 		  null,
 		  true,
@@ -76,6 +75,14 @@ public class rrd.command_graph_def : rrd.argument {
 	protected override rrd.argument_entry[] getArgumentEntries()
 	{ return DEF_ARGUMENT_ENTRIES; }
 
+	/**
+	 * prepare for positional arguments
+	 * splitting/filling in some fields from positional arguments.
+	 * the reason is the name=filename convention, where
+	 * name is not predictable.
+	 * @param postitional the positional/unparsed arguments
+	 * @return true if no issues
+	 */
 	protected override bool modifyOptions(
 		LinkedList<string> positional)
 	{
@@ -85,7 +92,7 @@ public class rrd.command_graph_def : rrd.argument {
 		if (hasOption("vname")) {
 			return true;
 		}
-		if (hasOption("rrdile")) {
+		if (hasOption("rrdfile")) {
 			return true;
 		}
 
@@ -93,32 +100,29 @@ public class rrd.command_graph_def : rrd.argument {
 		 * and split it ourselves to ket vname=rrdfile
 		 */
 		if (positional.size==0) {
-			stderr.printf(
+			rrd.error.setErrorString(
 				"no rrdfile or vname defined and no "
-				+ "positional arguments given!\n");
+				+ "positional arguments given!");
 			return false;
 		}
 
-		/* so let us get a peak at the first positional arg */
-		var pos0=positional.get(0);
+		/* so let us get the first positional arg */
+		var pos0=positional.poll_head();
 		/* and split it */
 		var keyval = pos0.split("=",2);
 		/* if no =, then we return an error */
 		if (keyval.length != 2) {
-			stderr.printf(
-				"the positional argument %s"
-				+ " does not contain =\n",
-				pos0);
+			rrd.error.setErrorString(
+				"the positional argument %s does not contain ="
+				.printf(pos0)
+				);
 			return false;
 		}
 
 		/* so we got key,value, so assign it */
 		setOption("vname",keyval[0]);
-		setOption("rrdile",keyval[1]);
+		setOption("rrdfile",keyval[1]);
 
-		/* as we have been successfull we can strip it
-		 * from the position list now */
-		positional.remove_at(0);
 		/* and return successfull */
 		return true;
 	}
@@ -147,9 +151,9 @@ public class rrd.command_graph_def : rrd.argument {
 		rrd.value_string rrdfile =
 			(rrd.value_string) getOptionValue(
 				"rrdile", cmd);
-		rrd.value_string dsname =
+		rrd.value_string rrdfield =
 			(rrd.value_string) getOptionValue(
-				"dsname", cmd);
+				"rrdfield", cmd);
 		rrd.value_string cf =
 			(rrd.value_string) getOptionValue(
 				"cf", cmd);
@@ -168,7 +172,7 @@ public class rrd.command_graph_def : rrd.argument {
 		}
 		/* to avoid warnings */
 		rrdfile=null;
-		dsname=null;
+		rrdfield=null;
 		cf=null;
 		reduce=null;
 

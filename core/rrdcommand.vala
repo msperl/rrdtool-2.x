@@ -460,12 +460,14 @@ public class rrd.command : rrd.object {
 	{
 		/* add entries to the option group */
 		setOptionGroup();
+
 		/* get the args as an array - we need to pass an array
 		 * to GOption, otherwise we lose the resizes on
 		 * function return
 		 */
 		string[] args_array = new string[args.size+1];
 		int i = 0;
+
 		/* dummy to make OptionContext.parse() happy */
 		args_array[i++] = "rrdool";
 		foreach(var arg in args) {
@@ -562,7 +564,8 @@ public class rrd.command : rrd.object {
 	public override rrd.object? delegate()
 	{
 		/* if we are not of type rrdcommand then parse args */
-		if( strcmp(this.get_type().name(),"rrdcommand") != 0) {
+		string cname=this.get_type().name();
+		if( strcmp(cname,"rrdcommand") != 0) {
 			/* parse the positional arguments */
 			if (! parsePositionalArguments()) {
 				/* on error return null */
