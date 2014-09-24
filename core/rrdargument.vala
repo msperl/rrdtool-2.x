@@ -178,7 +178,7 @@ public class rrd.argument : rrd.value {
 	 * @param list of positional arguments
 	 * @returns true on success
 	 */
-	protected virtual bool modifyOptions(LinkedList<string> list)
+	protected virtual bool modifyOptions()
 	{ return true; }
 
 	/**
@@ -194,6 +194,11 @@ public class rrd.argument : rrd.value {
 				?? new rrd.value_bool.bool(false);
 			/* this is an exception */
 			options.set("debug", cmd_debug);
+		}
+
+		/* dump what we have found */
+		if (((rrd.value_bool)options.get("debug")).to_bool())  {
+			dump();
 		}
 
 		/* now link it in command context
@@ -265,7 +270,7 @@ public class rrd.argument : rrd.value {
 		/* do some customized translations
 		 * prior to the default positional parser
 		 */
-		if (! modifyOptions(args) ) {
+		if (! modifyOptions() ) {
 			return false;
 		}
 
@@ -306,11 +311,6 @@ public class rrd.argument : rrd.value {
 						);
 				}
 			}
-		}
-
-		/* dump what we have found */
-		if (options.get("debug")!=null)  {
-			dump();
 		}
 
 		/* and return OK */
@@ -415,7 +415,6 @@ public class rrd.argument : rrd.value {
 
 		/* check if we got cmd as option */
 		string cmd;
-		dump();
 		if (hasOption("cmd")) {
 			cmd = ((rrd.value_string)getOption("cmd"))
 				.to_string();

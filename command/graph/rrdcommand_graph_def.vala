@@ -83,8 +83,7 @@ public class rrd.command_graph_def : rrd.argument {
 	 * @param postitional the positional/unparsed arguments
 	 * @return true if no issues
 	 */
-	protected override bool modifyOptions(
-		LinkedList<string> positional)
+	protected override bool modifyOptions()
 	{
 		/* check if rrdfile and vname are defined
 		 * then the "normal" positional rules apply
@@ -99,7 +98,7 @@ public class rrd.command_graph_def : rrd.argument {
 		/* otherwise we need to take the first positional argument
 		 * and split it ourselves to ket vname=rrdfile
 		 */
-		if (positional.size==0) {
+		if (args.size==0) {
 			rrd.error.setErrorString(
 				"no rrdfile or vname defined and no "
 				+ "positional arguments given!");
@@ -107,7 +106,7 @@ public class rrd.command_graph_def : rrd.argument {
 		}
 
 		/* so let us get the first positional arg */
-		var pos0=positional.poll_head();
+		var pos0=args.poll_head();
 		/* and split it */
 		var keyval = pos0.split("=",2);
 		/* if no =, then we return an error */

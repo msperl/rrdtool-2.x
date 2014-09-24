@@ -42,14 +42,6 @@ public abstract class rrd.value : rrd.object {
 	}
 
 	/**
-	 * virtual method that can modify OptionEntry fields
-	 * so that the correct flags are set
-	 * @param oe the option entry to modify
-	 */
-	public virtual void modifyOptEntry(ref OptionEntry oe)
-	{ ; }
-
-	/**
 	 * the main computational method
 	 * for calculating final values to return
 	 * most prominently overridden by rpn and def
@@ -205,15 +197,6 @@ public class rrd.value_bool : rrd.value {
 	}
 
 	/**
-	 * overridden method to set the OptionFlags to NO_ARG
-	 * by default we require flags for options
-	 * @param oe the option entry to modify
-	 */
-	public override void modifyOptEntry(ref OptionEntry oe) {
-		oe.flags = OptionFlags.NO_ARG;
-	}
-
-	/**
 	 * return a stringified version of flag
 	 * @return string representation of flag
 	 */
@@ -320,7 +303,6 @@ public class rrd.value_number : rrd.value {
  * mostly used for internal purposes
  */
 public class rrd.value_counter : rrd.value_number {
-
 	/**
 	 * return a stringified version of the number
 	 * also implicitly increments the counter by 1 on reads
@@ -328,7 +310,11 @@ public class rrd.value_counter : rrd.value_number {
 	 */
 	public override string? to_string()
 	{
-		value++;
+		if (value.is_nan()) {
+			value = 1;
+		} else {
+			value++;
+		}
 		return "%.0f".printf(value);
 	}
 }

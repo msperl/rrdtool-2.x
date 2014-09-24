@@ -37,7 +37,7 @@ public class rrd.command : rrd.object {
 	 * the list of arguments to get processed when using
 	 * the GObject constructor
 	 */
-	public LinkedList<string> args { get; construct; }
+	public LinkedList<string> args { get; protected construct set; }
 
 	/**
 	 * the parsed positional argument objects in sequence
@@ -425,7 +425,7 @@ public class rrd.command : rrd.object {
 	{
 		var command_options = getCommandOptions();
 		foreach (var co in command_options) {
-			/* add also the default values to the structure */
+			/* set the default values to the structure */
 			rrd.value def = null;
 			if (co.default_value != null) {
 				assert(co.is_positional != true);
@@ -442,20 +442,20 @@ public class rrd.command : rrd.object {
 			optentries[0].description     = co.description;
 			optentries[0].arg_description = co.arg_description;
 			optentries[0].arg             = OptionArg.CALLBACK;
-			/* assume default settings */
-			optentries[0].flags           = 0;
 			optentries[0].arg_data
 				= (void *)optionCallback;
-			/* now based on default do something special */
-			if (def != null) {
-				def.modifyOptEntry(ref optentries[0]);
-			}
+			/* set the flags depending on args */
+			optentries[0].flags           =
+				(optentries[0].arg_description == null)
+				? OptionFlags.NO_ARG : 0;
 			/* and add the entries */
 			group.add_entries(optentries);
 		}
 	}
 
-	/* the constructor using arguments - public only with subclasses */
+	/**
+	 * parse the given constructor arguments
+	 */
 	protected void parseArgs()
 	{
 		/* add entries to the option group */

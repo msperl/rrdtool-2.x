@@ -47,8 +47,7 @@ public class rrd.command_graph_rpn : rrd.argument {
 	 * @param postitional the positional/unparsed arguments
 	 * @return true if no issues
 	 */
-	protected override bool modifyOptions(
-		LinkedList<string> positional)
+	protected override bool modifyOptions()
 	{
 		/* check if rrdfile and vname are defined
 		 * then the "normal" positional rules apply
@@ -63,15 +62,15 @@ public class rrd.command_graph_rpn : rrd.argument {
 		/* otherwise we need to take the first positional argument
 		 * and split it ourselves to ket vname=rrdfile
 		 */
-		if (positional.size==0) {
+		if (args.size==0) {
 			stderr.printf(
 				"no rrdfile or vname defined and no "
 				+ "positional arguments given!\n");
 			return false;
 		}
 
-		/* so let us get a peak at the first positional arg */
-		var pos0=positional.get(0);
+		/* so let us get the first positional arg */
+		var pos0=args.poll_head();
 		/* and split it */
 		var keyval = pos0.split("=",2);
 		/* if no =, then we return an error */
@@ -87,9 +86,6 @@ public class rrd.command_graph_rpn : rrd.argument {
 		setOption("vname",keyval[0]);
 		setOption("rpn",keyval[1]);
 
-		/* as we have been successfull we can strip it
-		 * from the position list now */
-		positional.remove_at(0);
 		/* and return successfull */
 		return true;
 	}
