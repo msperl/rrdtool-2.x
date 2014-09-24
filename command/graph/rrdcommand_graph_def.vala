@@ -17,61 +17,47 @@
  * Author:
  * Martin Sperl <rrdtool@martin.sperl.org>
  */
-using Gee;
 
-public class rrd.command_graph_def : rrd.argument {
-
+/**
+ * the graph def argument implementation
+ * Note that this potentially can load a subclass via the derive functionality
+ * to process rrd1 files, rrd2 files or other backends like databases
+ */
+public class rrd.command_graph_def : rrd.argument_cachedGetValue {
+	/**
+	 * the defined fields
+	 */
 	protected const rrd.argument_entry[] DEF_ARGUMENT_ENTRIES = {
-		{ "vname",   0,
-		  "rrdvalue_string",
-		  null,
-		  true,
+		{ "vname",   0, "rrdvalue_string", null, true,
 		  "the vname of this data"
 		},
-		{ "rrdfile", 0,
-		  "rrdvalue_string",
-		  null,
-		  true,
+		{ "rrdfile", 0, "rrdvalue_string", null, true,
 		  "the filename of the rrd file"
 		},
-		{ "rrdfield",  0,
-		  "rrdvalue_string",
-		  null,
-		  true,
+		{ "rrdfield",0, "rrdvalue_string", null, true,
 		  "the field inside the rrd file"
 		},
-		{ "cf",      0,
-		  "rrdvalue_string",
-		  "AVG",
-		  true,
+		{ "cf",      0, "rrdvalue_string", "AVG", true,
 		  "the consolidation function to use"
 		},
-		{ "start",   0,
-		  "rrdvalue_rpn",
-		  "start",
-		  false,
+		{ "start",   0, "rrdvalue_rpn", "start", false,
 		  "the start time for the def"
 		},
-		{ "step",   0,
-		  "rrdvalue_rpn",
-		  "step",
-		  false,
+		{ "step",   0, "rrdvalue_rpn", "step", false,
 		  "the time steps for the def"
 		},
-		{ "end",   0,
-		  "rrdvalue_rpn",
-		  "end",
-		  false,
+		{ "end",    0, "rrdvalue_rpn", "end", false,
 		  "the end time for the def"
 		},
-		{ "reduce",      0,
-		  "rrdvalue_string",
-		  "",
-		  false,
+		{ "reduce", 0, "rrdvalue_string", "", false,
 		  "the reduction consolidation function to use"
 		}
 	};
 
+	/**
+	 * return the defined option fields
+	 * @return array of rrd.argument_entry[]
+	 */
 	protected override rrd.argument_entry[] getArgumentEntries()
 	{ return DEF_ARGUMENT_ENTRIES; }
 
@@ -126,15 +112,16 @@ public class rrd.command_graph_def : rrd.argument {
 		return true;
 	}
 
-	protected rrd.value_timestring cached_result = null;
-
-	public override rrd.value? getValue(
+	/**
+	 * calculates the value by fetching the data
+	 * @param cmd   the command for which we do this - ignored
+	 * @param stack the rpn stack of the context - ignored
+	 * @return rrd.value_timestring
+	 */
+	public override rrd.value? calcValue(
 		rrd.command cmd,
 		rrd.rpn_stack? stack = null)
 	{
-		if (cached_result != null)  {
-			return cached_result;
-		}
 		/* the start/step/end values */
 		rrd.value_timestamp start =
 			(rrd.value_timestamp) getOptionValue(
@@ -161,14 +148,15 @@ public class rrd.command_graph_def : rrd.argument {
 				"reduce", cmd);
 
 		/* create the timestring */
-		cached_result = new rrd.value_timestring.init(
+		var result = new rrd.value_timestring.init(
 			start,step,end,null);
 
 		/* fill in the timestring */
 		double dummy=0;
-		for (int i=0; i < cached_result.getSteps(); i++) {
-			cached_result.setData(i,dummy.NAN);
+		for (int i=0; i < result.getSteps(); i++) {
+			result.setData(i,dummy.NAN);
 		}
+
 		/* to avoid warnings */
 		rrdfile=null;
 		rrdfield=null;
@@ -176,7 +164,7 @@ public class rrd.command_graph_def : rrd.argument {
 		reduce=null;
 
 		/* return result */
-		return cached_result;
+		return result;
 
 	}
 }

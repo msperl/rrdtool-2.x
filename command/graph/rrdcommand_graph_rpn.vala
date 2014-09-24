@@ -17,10 +17,14 @@
  * Author:
  * Martin Sperl <rrdtool@martin.sperl.org>
  */
-using Gee;
 
+/**
+ * the rpn argument to graph
+ */
 public class rrd.command_graph_rpn : rrd.argument {
-
+	/**
+	 * the defined fields
+	 */
 	protected const rrd.argument_entry[] RPN_ARGUMENT_ENTRIES = {
 		{ "vname",   0,
 		  "rrdvalue_string",
@@ -36,6 +40,10 @@ public class rrd.command_graph_rpn : rrd.argument {
 		}
 	};
 
+	/**
+	 * return the defined option fields
+	 * @return array of rrd.argument_entry[]
+	 */
 	protected override rrd.argument_entry[] getArgumentEntries()
 	{ return RPN_ARGUMENT_ENTRIES; }
 
@@ -90,22 +98,28 @@ public class rrd.command_graph_rpn : rrd.argument {
 		return true;
 	}
 
-	protected rrd.value cached_result = null;
+	/**
+	 * calculate the value and return it
+	 * no need to cache it, as the getOptionValue(rpn)
+	 * does the caching work necessary
+	 * @param cmd   the command to which this belongs
+	 * @param stack the rpn_stack to work with - if null, then this is
+	 *              not part of a rpn calculation
+	 * @returns rrd_value with the value given - may be this
+	 */
 	public override rrd.value? getValue(
 		rrd.command cmd,
 		rrd.rpn_stack? stack = null)
 	{
-		/* take from cache */
-		if (cached_result != null)  {
-			return cached_result;
-		}
 		/* otherwise take from rpn itself */
-		cached_result = getOptionValue("rpn",cmd);
-
-		/* and return it */
-		return cached_result;
+		return getOptionValue("rpn",cmd);
 	}
 
+	/**
+	 * override the linkToCommandFullName,
+	 * so that we directly link the rpn for processing
+	 * cutting short on the above
+	 */
 	protected override void linkToCommandFullName(
 		rrd.command command,
 		string prefix)
@@ -115,5 +129,4 @@ public class rrd.command_graph_rpn : rrd.argument {
 			getOption("rpn")
 			);
 	}
-
 }

@@ -1,12 +1,31 @@
-using GLib;
-using Gee;
+/* rrdcommand_graph.vala
+ *
+ * Copyright (C) 2014 Martin Sperl
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * Author:
+ * Martin Sperl <rrdtool@martin.sperl.org>
+ */
 using Cairo;
 
+/**
+ * the graph command implementation
+ */
 public class rrd.command_graph : rrd.command {
-	/* strangely these can be protected or public */
-	private ImageSurface surface = null;
-	private Context context = null;
-
+	/**
+	 * the defined fields
+	 */
 	protected const rrd.argument_entry[] COMMAND_ARGUMENT_ENTRIES = {
 		{ "imagefile", 0, "rrdvalue_string", null, true,
 		  "filename to create", "<filename>"
@@ -40,42 +59,17 @@ public class rrd.command_graph : rrd.command {
 		}
 	};
 
+	/**
+	 * return the defined option fields
+	 * @return array of rrd.argument_entry[]
+	 */
 	protected override rrd.argument_entry[] getCommandOptions()
 	{ return COMMAND_ARGUMENT_ENTRIES; }
 
-	/* the execution method */
-	public override bool execute() {
-		/* depending on full sized mode maybe move things arround
-		 *  worsted case we may need to reparse the whole thing
-		 * to get different defaults...
-		 */
-
-		/* get the effective width and height */
-		int width = 600;
-		int height = 200;
-		/* now create the graph contexts */
-		surface = new ImageSurface(
-			Cairo.Format.RGB24,
-			width,
-			height);
-		context = new Context(surface);
-
-		var imgfile = getOption("imagefile");
-		if (imgfile == null) {
-			return false;
-		}
-		surface.write_to_png(imgfile.to_string());
-
-		/* and start processing */
-
-		stderr.printf("rrdcommand_graph.execute()\n");
-		dump();
-
-		/* try to calculate the effective width and height */
-
-		return true;
-	}
-
+	/**
+	 * delegate to subclasses - depending on the parameters
+         * @return the current intance or an instance to use
+	 */
 	public override rrd.object? delegate() {
 		string cname=this.get_type().name();
 
@@ -112,5 +106,52 @@ public class rrd.command_graph : rrd.command {
 		}
 		/* return this */
 		return this;
+	}
+
+	/**
+	 * the cairo image surface used for drawing
+	 * strangely these can't be protected or public
+	 */
+	private ImageSurface surface = null;
+	/**
+	 * the cairo context used for drawing
+	 * strangely these can't be protected or public
+	 */
+	private Context context = null;
+
+	/**
+	 * creates a graph
+	 * @return true on success
+	 */
+	public override bool execute() {
+		/* depending on full sized mode maybe move things arround
+		 *  worsted case we may need to reparse the whole thing
+		 * to get different defaults...
+		 */
+
+		/* get the effective width and height */
+		int width = 600;
+		int height = 200;
+		/* now create the graph contexts */
+		surface = new ImageSurface(
+			Cairo.Format.RGB24,
+			width,
+			height);
+		context = new Context(surface);
+
+		var imgfile = getOption("imagefile");
+		if (imgfile == null) {
+			return false;
+		}
+		surface.write_to_png(imgfile.to_string());
+
+		/* and start processing */
+
+		stderr.printf("rrdcommand_graph.execute()\n");
+		dump();
+
+		/* try to calculate the effective width and height */
+
+		return true;
 	}
 }
