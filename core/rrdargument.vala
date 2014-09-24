@@ -1,4 +1,4 @@
-/* rrdobject.vala
+/* rrdargument.vala
  *
  * Copyright (C) 2014 Martin Sperl
  *
@@ -18,41 +18,6 @@
  * Martin Sperl <rrdtool@martin.sperl.org>
  */
 using Gee;
-
-/**
- * structure containing the argument option flags
- */
-public struct rrd.argument_entry {
-	/**
-	 * the long name of the option - e.g --<name>
-	 */
-	public unowned string    name;
-	/**
-	 * the short name of the option - e.g -<short_name>
-	 */
-	public char              short_name;
-	/**
-	 * the class name of the object to generate for this object
-	 */
-	public string            class_name;
-	/**
-	 * the default value to set when not set as option
-	 */
-	public string            default_value;
-	/**
-	 * flag if it is a positional argument
-	 * if so, then the order is important
-	 */
-	public bool              is_positional;
-	/**
-	 * the description string
-	 */
-	public unowned string    description;
-	/**
-	 * the argument description
-	 */
-	public unowned string    arg_description;
-}
 
 /**
  * the (positional) argument class
