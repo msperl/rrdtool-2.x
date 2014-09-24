@@ -22,17 +22,62 @@ using Gee;
 /**
  * the (positional) argument class
  */
-public abstract class rrd.argument : rrd.value {
+public class rrd.argument : rrd.value {
+	/**
+	 * the parent rrd_command from which we are derived
+	 */
+	public rrd.argument parent { get; construct; }
+
 	/**
 	 * constructor argument list of arguments to this argument
 	 */
-        public LinkedList<string> argsList { get; construct; }
+        public LinkedList<string> args { get; protected construct set; }
+
+	/**
+	 * constructor argument command to which this object belongs
+	 */
+        public weak rrd.command command { get; construct; }
+
+	/**
+	 * the parsed options as a map for quick access.
+	 * this also contains the options of arguments,
+	 * so that the parameters of those can also get
+	 * used for rpn calculations
+	 */
+	protected TreeMap<string,rrd.value> options;
+
 	/**
 	 * constructor
 	 */
         construct {
-		assert(argsList != null);
-		parseArgs(argsList);
+		/* if we got a parent so this is happening during delegation
+		 * copy the things from parent - we can highjack it, as it
+		 * (should) get destroyed anyway inside the factory
+		 */
+		if (parent != null) {
+			/* copy things over from parent */
+			args =
+				parent.args;
+			options = (owned)
+				parent.options;
+			command =
+				parent.command;
+			/* and parse the remaining arguments */
+			parseArgs();
+		} else if (args == null) {
+			rrd.error.setErrorString(
+				"construct %s without args set"
+				.printf(this.get_type().name()));
+		} else if (command == null) {
+			rrd.error.setErrorString(
+				"construct %s without command set"
+				.printf(this.get_type().name()));
+		} else {
+			/* fill in options */
+			options = new TreeMap<string,rrd.value>();
+			/* and parse the remaining arguments */
+			parseArgs();
+		}
         }
 	/**
 	 * execute method
@@ -42,14 +87,6 @@ public abstract class rrd.argument : rrd.value {
 	 */
 	public bool execute(rrd.command cmd)
 	{ return true ; }
-
-	/**
-	 * the parsed options as a map for quick access.
-	 * this also contains the options of arguments,
-	 * so that the parameters of those can also get
-	 * used for rpn calculations
-	 */
-	protected TreeMap<string,rrd.value> options;
 
 	/**
 	 * check if we have an option
@@ -115,119 +152,18 @@ public abstract class rrd.argument : rrd.value {
 			stderr.printf("   Parsed arg: %s = %s\n",
 				arg.key,arg.value.to_string());
 		}
-		foreach(var p in argsList) {
-			stderr.printf("   ArgList: %s\n",p);
+		foreach(var p in args) {
+			stderr.printf("   Arg: %s\n",p);
 		}
 
-	}
-
-	/**
-	 * split_colon method, that also takes care of escaped colons
-	 * @param arg the string which we should split
-	 * @return list of asplit objects
-	 */
-	protected static LinkedList<string>? split_colon(string arg)
-	{
-		/* move it to an LinkedList on split
-		 * but also join the ones that have been escaped
-		 */
-		var arglist = new LinkedList<string>();
-		string merged = "";
-		foreach(var str in arg.split(":")) {
-			/* find trailing escape,
-			 * but only ones that are not escaped itself
-			 */
-			if ( (str.length == 1)
-				/* case one of trailing escape */
-				&& (str.substring(-1, 1) == "\\") ) {
-				merged += str.substring(0, str.length-1)+":";
-			} else if ( (str.length > 1)
-				/* case two of trailing escape
-				 * checking that the escape is not
-				 * escaped itself...
-				 */
-				&& (str.substring(-1, 1) == "\\")
-				&& (str.substring(-2, 1) != "\\\\")
-				) {
-				merged += str.substring(0,str.length-2)+":";
-			} else {
-				/* otherwise add to list and empty merged */
-				arglist.add(merged + str);
-				merged = "";
-			}
-		}
-		/* if we got a "trailing" \, then there is something wrong */
-		if (merged != "") {
-			rrd.error.setErrorString(
-				"Error: unterminated escape \\ string\n");
-			return null;
-		}
-		/* otherwise return arglist */
-		return arglist;
-	}
-
-	/**
-	 * the factory that transforms a positional argument
-	 * into an object
-	 * @param command the command for which we do this
-	 * @param cmdstr  the string which we need to parse
-	 * @return rrd.command object or null
-	 */
-	public static new rrd.argument? factory(
-		rrd.command command, string cmdstr)
-	{
-
-		/* split into a list */
-		var split = split_colon(cmdstr);
-		if (split == null) {
-			return null;
-		}
-
-		/* now start processing those entries
-		 * to get the type of arg */
-		string cmdname_find = null;
-		string cmdname = null;
-		foreach(var arg in split) {
-			/* try to split in key/values */
-			var keyvalue=arg.split("=",2);
-			/* now  check if we got key+value */
-			if (keyvalue.length == 1) {
-				/* postitional argument */
-				if ( cmdname == null ) {
-					cmdname_find = arg;
-					cmdname = arg.down();
-				}
-			} else {
-				/* got key/value, so check if key is "cmd" */
-				if (keyvalue[0] == "cmd") {
-					cmdname_find = arg.down();
-					cmdname = keyvalue[1];
-				}
-			}
-		}
-
-		/* now that we got everything remove the entries */
-		if (cmdname != null) {
-			split.remove(cmdname_find);
-		}
-
-		/* get the (base classname) for the classname */
-		var base_class=command.get_type().name();
-
-		/* and now create the Class object
-		 * - this has delegate implemented!!!
-		 */
-		return (rrd.argument) classFactory(
-				base_class + "_" + cmdname,
-				"rrdargument",
-				"argsList",split);
 	}
 
 	/**
 	 * the default empty list of argument entries
 	 */
-	protected const rrd.argument_entry[] DEFAULT_ARGUMENT_ENTRIES =
-		{ };
+	protected const rrd.argument_entry[] DEFAULT_ARGUMENT_ENTRIES = {
+		{ "cmd",  0, "rrdvalue_string", null, true, "command" }
+		};
 
 	/**
 	 * get the relevant argument entries
@@ -242,8 +178,7 @@ public abstract class rrd.argument : rrd.value {
 	 * @param list of positional arguments
 	 * @returns true on success
 	 */
-	protected virtual bool modifyOptions(
-		LinkedList<string> positional)
+	protected virtual bool modifyOptions(LinkedList<string> list)
 	{ return true; }
 
 	/**
@@ -294,15 +229,18 @@ public abstract class rrd.argument : rrd.value {
 	 * parse linked list of unhandled args
 	 * and put them into context
 	 */
-	protected bool parseArgs(LinkedList<string>? arg_list)
+	protected bool parseArgs()
 	{
 		/* list of positional=unhandled args */
 		var pos_args = new LinkedList<string>();
-		/* initialize map of keys */
-		options = new TreeMap<string,rrd.value>();
+
+		/* copy the debug from the command */
+		if (command.hasOption("debug")) {
+			options.set("debug",command.getOption("debug"));
+		}
 
 		/* now parse the args */
-		foreach(var arg in arg_list) {
+		foreach(var arg in args) {
 			/* try to split in key/values */
 			var keyvalue=arg.split("=",2);
 			/* if we got a single entry only,
@@ -310,41 +248,42 @@ public abstract class rrd.argument : rrd.value {
 			if (keyvalue.length == 1) {
 				pos_args.add(arg);
 			} else {
+				/* it is key/value */
 				var key = keyvalue[0];
 				var value = keyvalue[1];
-				rrd.value val = null;
-				/* hardcoded debug */
-				if (strcmp(key,"debug") == 0) {
-					val = new rrd.value_bool.bool(true);
-					options.set(key,val);
-				} else {
-					if (! setOption(key,value)) {
-						pos_args.add(arg);
-					}
+				/* so try to set it */
+				if (! setOption(key,value)) {
+					/* if we can not,
+					 * then it is a positional rarg */
+					pos_args.add(arg);
 				}
 			}
 		}
+		/* now we can assign the pos_args back to args */
+		args = pos_args;
 
 		/* do some customized translations
 		 * prior to the default positional parser
 		 */
-		if (! modifyOptions(pos_args) ) {
+		if (! modifyOptions(args) ) {
 			return false;
 		}
 
-		/* now handle the positional args and also set the defaults */
+		/* now handle the positional args
+		 * and also set the defaults */
+
 		/* get the arg info for this class */
 		var entries = getArgumentEntries();
-
+		/* loop entries */
 		foreach(var entry in entries) {
 			if (hasOption(entry.name)) {
 				/* do nothing */
 			} else if (entry.is_positional) {
-				if (pos_args.size>0) {
+				if (args.size>0) {
 					/* create a new class */
 					setOption(
 						entry.name,
-						pos_args.remove_at(0)
+						args.remove_at(0)
 						);
 				} else {
 					rrd.error.setErrorString(
@@ -367,21 +306,6 @@ public abstract class rrd.argument : rrd.value {
 						);
 				}
 			}
-		}
-
-		/* if there are any positional arguments NOT used,
-		   then we fail */
-		if (pos_args.size > 0) {
-			string unclaimed="";
-			for(int i=0;i<pos_args.size;i++) {
-				unclaimed += ((i>0) ? ":" : "")
-					+ pos_args.get(i);
-			}
-			rrd.error.setErrorString(
-				"Unclaimed arguments: %s"
-				.printf(unclaimed)
-				);
-			return false;
 		}
 
 		/* dump what we have found */
@@ -459,4 +383,136 @@ public abstract class rrd.argument : rrd.value {
 
 	public override string? to_string()
 	{ return "TODO"; }
+
+	/**
+	 * delegate method that will take parse the class arguments
+	 * that have not been parsed and return a replacement version
+	 * @return the new rrd_object
+	 */
+	public override rrd.object? delegate()
+	{
+		/* if we are not of type rrdcommand then parse args */
+		string cname=this.get_type().name();
+		if( strcmp(cname,"rrdargument") != 0) {
+			/* if there are any positional arguments NOT used,
+			 * then we fail
+			 */
+			if (args.size > 0) {
+				string unclaimed="";
+				for(int i=0;i<args.size;i++) {
+					unclaimed += ((i>0) ? ":" : "")
+						+ args.get(i);
+				}
+				rrd.error.setErrorString(
+					"Unclaimed arguments: %s"
+					.printf(unclaimed)
+					);
+				return null;
+			}
+			/* otherwise return this */
+			return this;
+		}
+
+		/* check if we got cmd as option */
+		string cmd;
+		dump();
+		if (hasOption("cmd")) {
+			cmd = ((rrd.value_string)getOption("cmd"))
+				.to_string();
+		} else {
+			/* otherwise try to fetch from args */
+			if (args.size <1) {
+				/* check if we got help */
+				rrd.error.setErrorString(
+					"Unexpected length - need at least 1 arg as command");
+				return null;
+			} else {
+				cmd = args.poll_head();
+			}
+		}
+		/* now get the command itself in lower case */
+		string cmdbase = command.get_type().name();
+
+		/* and delegate to it using parent */
+		return (rrd.argument) classFactory(
+			cmdbase + "_" + cmd.down(),
+			"rrdargument",
+			"parent",this
+			);
+	}
+
+
+	/**
+	 * split_colon method, that also takes care of escaped colons
+	 * @param arg the string which we should split
+	 * @return list of asplit objects
+	 */
+	protected static LinkedList<string>? split_colon(string arg)
+	{
+		/* move it to an LinkedList on split
+		 * but also join the ones that have been escaped
+		 */
+		var arglist = new LinkedList<string>();
+		string merged = "";
+		foreach(var str in arg.split(":")) {
+			/* find trailing escape,
+			 * but only ones that are not escaped itself
+			 */
+			if ( (str.length == 1)
+				/* case one of trailing escape */
+				&& (str.substring(-1, 1) == "\\") ) {
+				merged += str.substring(0, str.length-1)+":";
+			} else if ( (str.length > 1)
+				/* case two of trailing escape
+				 * checking that the escape is not
+				 * escaped itself...
+				 */
+				&& (str.substring(-1, 1) == "\\")
+				&& (str.substring(-2, 1) != "\\\\")
+				) {
+				merged += str.substring(0,str.length-2)+":";
+			} else {
+				/* otherwise add to list and empty merged */
+				arglist.add(merged + str);
+				merged = "";
+			}
+		}
+		/* if we got a "trailing" \, then there is something wrong */
+		if (merged != "") {
+			rrd.error.setErrorString(
+				"Error: unterminated escape \\ string\n");
+			return null;
+		}
+		/* otherwise return arglist */
+		return arglist;
+	}
+
+	/**
+	 * the factory that transforms a positional argument
+	 * into an object
+	 * @param command the command for which we do this
+	 * @param cmdstr  the string which we need to parse
+	 * @return rrd.command object or null
+	 */
+	public static new rrd.argument? factory(
+		rrd.command command, string cmdstr)
+	{
+
+		/* split into a list */
+		var split = split_colon(cmdstr);
+		if (split == null) {
+			return null;
+		}
+
+		/* and now create the Class object
+		 * - this has delegate implemented!!!
+		 */
+		return (rrd.argument) classFactory(
+				"rrdargument",
+				null,
+				"args",split,
+				"command", command
+			);
+	}
+
 }
