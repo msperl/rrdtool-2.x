@@ -186,17 +186,34 @@ public class rrd.object : GLib.Object {
 		}
 
 		/* and now check ancestors */
-		for ( Type p = class_type.parent ();
-		      p != 0 ; p = p.parent () ) {
-			if ( strcmp(p.name(),subclassof) == 0 ) {
-				return class_type;
-			}
+		if (isSubClassOf(class_type,subclassof)) {
+			return class_type;
 		}
+
 		/*  and error handling if it is not a subtype */
 		rrd.error.setErrorStringIfNull(
 			"type %s is not a subtype of %s"
 			.printf(class_name,subclassof)
 			);
 		return Type.INVALID;
+	}
+
+	/**
+	 * check if class _type is of parent class type
+	 * @param class_type the classtype to check
+	 * @param subclassof the class it must be a child of
+	 * @return true on match
+	 */
+	public static bool isSubClassOf(
+		Type class_type,
+		string subclassof)
+	{
+		for ( Type p = class_type.parent ();
+		      p != 0 ; p = p.parent () ) {
+			if ( strcmp(p.name(),subclassof) == 0 ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

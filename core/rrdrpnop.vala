@@ -48,12 +48,32 @@ public abstract class rrd.rpnop : rrd.value
 	 */
 	public override rrd.value? getValue(
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack = null)
 	{
 		rrd.error.setErrorString(
 			"rrd.rpnop.getvalue not overridden!"
 			);
 		return null;
+	}
+
+	protected rrd.value? getValueFromStack(
+		rrd.command cmd,
+		bool skipcalc,
+		int count,
+		rrd.rpn_stack? stack = null)
+	{
+		/* pop from stack */
+		var arg = stack.pop();
+		if (arg == null) {
+			rrd.error.setErrorString(
+				"not enough arguments on stack - need %i more"
+				.printf(count)
+				);
+			return null;
+		}
+		/* get and return the value */
+		return arg.getValue(cmd,skipcalc,stack);
 	}
 
 	/**
@@ -99,7 +119,9 @@ public abstract class rrd.rpnop : rrd.value
 	 * @return an operator instance or null
 	 */
 	public new static rrd.rpnop? factory(
-		string opname_a)
+		string opname_a,
+		string? alt_base_name = null
+		)
 	{
 		/* create aliases if needed */
 		if (aliases == null) {
@@ -113,9 +135,21 @@ public abstract class rrd.rpnop : rrd.value
 		}
 
 		/* now call the factory */
-		return (rrd.rpnop) rrd.object.classFactory(
+		var res = (rrd.rpnop) rrd.object.classFactory(
 			"rrdrpnop_"+opname.down(),
 			"rrdrpnop",
 			"String", "");
+		if (res != null)
+			return res;
+		/* use the alternate parser */
+		if (alt_base_name != null) {
+			rrd.error.clearError();
+			res = (rrd.rpnop) rrd.object.classFactory(
+				alt_base_name+"_rpnop_"+opname.down(),
+				"rrdrpnop",
+				"String", "");
+		}
+		/* return result */
+		return res;
 	}
 }

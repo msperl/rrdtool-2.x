@@ -65,9 +65,20 @@ public class rrd.argument : rrd.value {
 			/* and parse the remaining arguments */
 			parseArgs();
 		} else if (args == null) {
-			rrd.error.setErrorString(
-				"construct %s without args set"
-				.printf(this.get_type().name()));
+			if (String == null) {
+				rrd.error.setErrorString(
+					"construct %s without args or String set"
+					.printf(this.get_type().name()));
+			} else {
+				/* split into a list */
+				args = split_colon(String);
+				if (args != null) {
+					/* fill in options */
+					options = new TreeMap<string,rrd.value>();
+					/* and parse the remaining arguments */
+					parseArgs();
+				}
+			}
 		} else if (command == null) {
 			rrd.error.setErrorString(
 				"construct %s without command set"
@@ -119,7 +130,7 @@ public class rrd.argument : rrd.value {
 	{
 		rrd.value res = getOption(key);
 		if (res != null) {
-			return res.getValue(cmd,null);
+			return res.getValue(cmd,false,null);
 		}
 		return res;
 	}
@@ -128,19 +139,35 @@ public class rrd.argument : rrd.value {
 	 * set option key to value
 	 * @param key the key to set
 	 * @param value the value to set
-	 * @return status if OK
+	 * @return status true if OK
 	 */
 	protected bool setOption(string key, string value)
 	{
 		/* create a new class */
 		rrd.value val = getClassForKey(key,value);
 		/* if it is set, then it is in entries */
-		if (val != null) {
-			options.set(key,val);
-			return true;
-		} else {
+		if (val == null) {
 			return false;
 		}
+		/* now set the value */
+		options.set(key,val);
+		/* and if the value is of type rrd_argument,
+		 * then link also the subvalues
+		 */
+		var flag = val.isSubClassOf(
+			val.get_type(),
+			"rrdargument");
+		if ( flag )  {
+			var opt=((rrd.argument)val).options;
+			foreach( var ent in opt) {
+				options.set(
+					key+"."+ent.key,
+					ent.value
+					);
+			}
+		}
+		/* return it */
+		return true;
 	}
 
 	/**
@@ -214,9 +241,11 @@ public class rrd.argument : rrd.value {
 		 * - this should be a reference
 		 */
 		foreach(var kv in options) {
+			string ctx=prefix+"."+kv.key;
 			command.setOption(
-				prefix+"."+kv.key,
+				ctx,
 				kv.value);
+			kv.value.setContext(ctx);
 		}
 	}
 
@@ -246,6 +275,10 @@ public class rrd.argument : rrd.value {
 
 		/* now parse the args */
 		foreach(var arg in args) {
+			/* skip an empty string */
+			if (strcmp(arg,"")==0) {
+				continue;
+			}
 			/* try to split in key/values */
 			var keyvalue=arg.split("=",2);
 			/* if we got a single entry only,
@@ -257,9 +290,9 @@ public class rrd.argument : rrd.value {
 				var key = keyvalue[0];
 				var value = keyvalue[1];
 				/* so try to set it */
-				if (! setOption(key,value)) {
+				if (! setOption(key,value) ) {
 					/* if we can not,
-					 * then it is a positional rarg */
+					 * then it is a positional arg */
 					pos_args.add(arg);
 				}
 			}
@@ -305,10 +338,12 @@ public class rrd.argument : rrd.value {
 						entry.default_value
 						);
 				} else {
-					rrd.error.setErrorString(
+/*
+					rrd.error.setErrorStringIfNull(
 						"missing argument for %s"
 						.printf(entry.name)
 						);
+*/
 				}
 			}
 		}
@@ -453,7 +488,7 @@ public class rrd.argument : rrd.value {
 		 */
 		var arglist = new LinkedList<string>();
 		string merged = "";
-		foreach(var str in arg.split(":")) {
+		foreach(var str in arg.split_set(":")) {
 			/* find trailing escape,
 			 * but only ones that are not escaped itself
 			 */
@@ -530,14 +565,18 @@ public abstract class rrd.argument_cachedGetValue : rrd.argument {
 	 * central rrd.value.getValue implementation
 	 * that does take care of caching the computational data
 	 * @param cmd   the command to which this belongs
+	 * @param skipvalue skip value calculations
 	 * @param stack the rpn_stack to work with - if null, then this is
 	 *              not part of a rpn calculation
 	 * @returns rrd_value with the value given - may be this
 	 */
 	public override rrd.value? getValue(
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack_arg)
 	{
+		if (skipcalc)
+			return null;
 		/* if we do not have it cached, then calculate it */
 		if (cached_calcValue == null) {
 			cached_calcValue = calcValue(

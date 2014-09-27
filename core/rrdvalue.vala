@@ -29,6 +29,14 @@ public abstract class rrd.value : rrd.object {
 	public string? String {get; protected set construct;}
 
 	/**
+	 * constructor argument of the Argument String
+	 */
+	public string? context = null;
+
+	public void setContext(string? ctx)
+	{ context = ctx; }
+
+	/**
 	 * abstract method that parses member variable String
 	 * to the internal format
 	 */
@@ -48,12 +56,14 @@ public abstract class rrd.value : rrd.object {
 	 * to calc the rpn/load data from rrdfile on demand
 	 * @param cmd   the command to which this belongs (if there
 	 *              is the need for a context to lookup other values)
+	 * @param skipcalc skip calcuilation if true
 	 * @param stack the rpn_stack to work with - if null, then this is
 	 *              not part of a rpn calculation
 	 * @returns rrd_value with the value given - may be this
 	 */
 	public virtual rrd.value? getValue(
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack)
 	{ return this; }
 
@@ -61,6 +71,10 @@ public abstract class rrd.value : rrd.object {
 	 * method to transform internal values to string
 	 */
 	public abstract string? to_string();
+
+	/* note that we maybe should also should implement this:
+	 *	public virtual bool to_bool() { return false; }
+	 */
 
 	/**
 	 * create an rrd_value using the class_name from
@@ -88,7 +102,7 @@ public abstract class rrd.value : rrd.object {
 		return (rrd.value) rrd.object.classFactory(
 			class_name,
 			"rrdvalue",
-			"String",value);
+			"String", value);
 	}
 }
 
@@ -106,18 +120,22 @@ public abstract class rrd.value_cachedGetValue : rrd.value {
 	 * central rrd.value.getValue implementation
 	 * that does take care of caching the computational data
 	 * @param cmd   the command to which this belongs
+	 * @param skipcalc skip expensive calculations
 	 * @param stack the rpn_stack to work with - if null, then this is
 	 *              not part of a rpn calculation
 	 * @returns rrd_value with the value given - may be this
 	 */
 	public override rrd.value? getValue(
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack_arg)
 	{
-		/* if we do not have it cached, then calculate it */
-		if (cached_calcValue == null) {
-			cached_calcValue = calcValue(
-				cmd, stack_arg);
+		if (!skipcalc) {
+			/* if we do not have it cached, then calculate it */
+			if (cached_calcValue == null) {
+				cached_calcValue = calcValue(
+					cmd, stack_arg);
+			}
 		}
 		/* and return the cached_value */
 		return cached_calcValue;

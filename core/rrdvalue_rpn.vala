@@ -57,8 +57,8 @@ public class rrd.value_rpn : rrd.value_cachedGetValue {
 		/* if we got a stack already, then we recursed on ourself */
 		if (stack != null) {
 			rrd.error.setErrorString(
-				"RPN recursion detected for %s"
-				.printf(String));
+				"RPN recursion detected for %s in context %s"
+				.printf(String, context));
 			return null;
 		}
 
@@ -66,7 +66,7 @@ public class rrd.value_rpn : rrd.value_cachedGetValue {
 		stack=new rrd.rpn_stack();
 
 		/* then calculate */
-		var result = stack.parse(String,cmd);
+		var result = stack.parse(String, cmd, context);
 
 		/* clean the stack again */
 		stack = null;

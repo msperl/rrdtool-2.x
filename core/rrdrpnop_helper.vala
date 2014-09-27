@@ -28,10 +28,12 @@ public abstract class rrd.rpnophelper_obj : rrd.rpnop {
 	 *              is the need for a context to lookup other values)
 	 * @param stack the rpn_stack to work with - if null, then this is
 	 *              not part of a rpn calculation
+	 * @param skipcalc skip the expensive calculations
 	 * @returns rrd_value with the value given - may be this
 	 */
 	public override rrd.value? getValue(
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack = null)
 	{
 		/* pop values from stack */
@@ -43,10 +45,14 @@ public abstract class rrd.rpnophelper_obj : rrd.rpnop {
 			return null;
 		}
 		/* now get the values */
-		var val = arg.getValue(cmd,stack);
+		var val = arg.getValue(cmd, skipcalc, stack);
 		if (val == null) {
 			return null;
 		}
+		/* if we are skipping, dont calculate */
+		if (skipcalc)
+			return null;
+		/* do the calculation */
 		return getValue1(val,cmd,stack);
 	}
 	/**
@@ -72,15 +78,17 @@ public abstract class rrd.rpnophelper_obj_obj : rrd.rpnop {
 	 * implement the generic getValue method
 	 * @param cmd   the command to which this belongs (if there
 	 *              is the need for a context to lookup other values)
+	 * @param skipcalc skip the expensive calculations
 	 * @param stack the rpn_stack to work with - if null, then this is
 	 *              not part of a rpn calculation
 	 * @returns rrd_value with the value given - may be this
 	 */
 	public override rrd.value? getValue(
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack = null)
 	{
-		/* pop values from stack */
+		/* pop value from stack */
 		var arg2 = stack.pop();
 		if (arg2 == null) {
 			rrd.error.setErrorString(
@@ -88,6 +96,14 @@ public abstract class rrd.rpnophelper_obj_obj : rrd.rpnop {
 				);
 			return null;
 		}
+
+		/* now get the value */
+		var val2 = arg2.getValue(cmd,skipcalc,stack);
+		if (val2 == null) {
+			return null;
+		}
+
+		/* pop value from stack */
 		var arg1 = stack.pop();
 		if (arg1 == null) {
 			rrd.error.setErrorString(
@@ -96,16 +112,17 @@ public abstract class rrd.rpnophelper_obj_obj : rrd.rpnop {
 			return null;
 		}
 
-		/* now get the values */
-		var val2 = arg2.getValue(cmd,stack);
-		if (val2 == null) {
-			return null;
-		}
-
-		var val1 = arg1.getValue(cmd,stack);
+		/* now get the value */
+		var val1 = arg1.getValue(cmd,skipcalc,stack);
 		if (val1 == null) {
 			return null;
 		}
+
+		/* if we are skipping, dont calculate */
+		if (skipcalc)
+			return null;
+
+		/* and call */
 		return getValue2(val1,val2,cmd,stack);
 	}
 	/**
@@ -133,12 +150,14 @@ public abstract class rrd.rpnophelper_obj_obj_obj : rrd.rpnop {
 	 * implement the generic getValue method
 	 * @param cmd   the command to which this belongs (if there
 	 *              is the need for a context to lookup other values)
+	 * @param skipcalc skip the expensive calculations
 	 * @param stack the rpn_stack to work with - if null, then this is
 	 *              not part of a rpn calculation
 	 * @returns rrd_value with the value given - may be this
 	 */
 	public override rrd.value? getValue(
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack = null)
 	{
 		/* pop values from stack */
@@ -149,6 +168,11 @@ public abstract class rrd.rpnophelper_obj_obj_obj : rrd.rpnop {
 				);
 			return null;
 		}
+		var val3 = arg3.getValue(cmd,skipcalc,stack);
+		if (val3 == null) {
+			return null;
+		}
+
 		var arg2 = stack.pop();
 		if (arg2 == null) {
 			rrd.error.setErrorString(
@@ -156,6 +180,11 @@ public abstract class rrd.rpnophelper_obj_obj_obj : rrd.rpnop {
 				);
 			return null;
 		}
+		var val2 = arg2.getValue(cmd,skipcalc,stack);
+		if (val2 == null) {
+			return null;
+		}
+
 		var arg1 = stack.pop();
 		if (arg1 == null) {
 			rrd.error.setErrorString(
@@ -163,22 +192,15 @@ public abstract class rrd.rpnophelper_obj_obj_obj : rrd.rpnop {
 				);
 			return null;
 		}
-
-		/* now get the values */
-		var val3 = arg3.getValue(cmd,stack);
-		if (val3 == null) {
-			return null;
-		}
-
-		var val2 = arg2.getValue(cmd,stack);
-		if (val2 == null) {
-			return null;
-		}
-
-		var val1 = arg1.getValue(cmd,stack);
+		var val1 = arg1.getValue(cmd,skipcalc,stack);
 		if (val1 == null) {
 			return null;
 		}
+
+		/* if we are skipping, dont calculate */
+		if (skipcalc)
+			return null;
+		/* do the processing */
 		return getValue3(val1,val2,val3,cmd,stack);
 	}
 	/**
@@ -238,7 +260,7 @@ public abstract class rrd.rpnophelper_value : rrd.rpnophelper_obj {
 		getValue_Number(
 			rrd.value_number val);
 	/**
-	 * abstract method that takes a number value
+	 * abstract method that takes a timestring value
 	 * @param val Timestring
 	 * @return Number/Timestring
 	 */
@@ -591,12 +613,14 @@ public abstract class rrd.rpnophelper_one_or_n_plus_one : rrd.rpnop
 	 * implement the generic getValue method
 	 * @param cmd   the command to which this belongs (if there
 	 *              is the need for a context to lookup other values)
+	 * @param skipcalc skip the expensive calculations
 	 * @param stack the rpn_stack to work with - if null, then this is
 	 *              not part of a rpn calculation
 	 * @returns rrd_value with the value given - may be this
 	 */
 	public override rrd.value? getValue(
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack = null)
 	{
 		var obj = stack.pop();
@@ -614,16 +638,21 @@ public abstract class rrd.rpnophelper_one_or_n_plus_one : rrd.rpnop
 			return getValueOverStackElements(
 				(rrd.value_number) obj,
 				cmd,
+				skipcalc,
 				stack);
 		}
 		/* otherwise get the values - it might be a rpn again */
-		var val = obj.getValue(cmd,stack);
+		var val = obj.getValue(cmd,skipcalc,stack);
 		if (val == null) {
 			/* there was an error upstream
 			 * in the rpn calculation
 			 */
 			return null;
 		}
+
+		/* skip calculation in some circumstances */
+		if (skipcalc)
+			return null;
 
 		/* some more checks for an immediate number */
 		var t = val.get_type();
@@ -711,6 +740,7 @@ public abstract class rrd.rpnophelper_one_or_n_plus_one : rrd.rpnop
 	public virtual rrd.value? getValueOverStackElements(
 		rrd.value_number steps_v,
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack = null) {
 		int steps = steps_v.getInteger();
 		if (steps<=0) {
@@ -723,10 +753,13 @@ public abstract class rrd.rpnophelper_one_or_n_plus_one : rrd.rpnop
 		for(int i=0 ; i<steps ; i++,count++) {
 			var obj = stack.pop();
 			if (obj != null) {
-				obj = obj.getValue(cmd,stack);
+				obj = obj.getValue(cmd,skipcalc,stack);
 			}
-			processValue(obj);
+			if (! skipcalc)
+				processValue(obj);
 		}
+		if (skipcalc)
+			return null;
 		/* return result */
 		return postprocessValue();
 	}

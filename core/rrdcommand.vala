@@ -172,10 +172,12 @@ public class rrd.command : rrd.object {
 		stderr.printf("Command: %s\n",get_type().name());
 		/* iterate all options */
 		foreach(var val in options) {
+			/* clear errors */
+			rrd.error.clearError();
 			/* get the value */
 			rrd.value v = val.value;
 			if (val.value == null) {
-				stderr.printf("\t%-40s\t = NULL\n",
+				stderr.printf("\t%-20s\t = NULL\n",
 					val.key);
 			} else {
 				/* get the class of the value */
@@ -187,11 +189,11 @@ public class rrd.command : rrd.object {
 					/* then try to get the effective
 					 * value as well */
 					var vobj = v.getValue(
-						this, null);
+						this, false,null);
 					if (vobj == null) {
 						stderr.printf(
-							"\t%-40s\t = (%s)"
-							+ "\t%s = ERROR: %s\n",
+							"\t%-20s\t = (%s)"
+							+ "%s\n\t\t\t\t\t= ERROR: %s\n",
 							val.key,
 							vtype,
 							vstr,
@@ -207,8 +209,8 @@ public class rrd.command : rrd.object {
 						var vobjtype =
 							vobj.get_type().name();
 						stderr.printf(
-							"\t%-40s\t = (%s)"
-							+ "\t%s = (%s) %s\n",
+							"\t%-20s\t = (%s)"
+							+ "%s\n\t\t\t\t\t= (%s) %s\n",
 							val.key,
 							vtype,
 							vstr,
@@ -219,7 +221,7 @@ public class rrd.command : rrd.object {
 				} else {
 					/* just print the rrd_value */
 					stderr.printf(
-						"\t%-40s\t = (%s)\t%s\n",
+						"\t%-20s\t = (%s)\t%s\n",
 						val.key,
 						vtype,
 						vstr
@@ -227,6 +229,8 @@ public class rrd.command : rrd.object {
 				}
 			}
 		}
+		/* clear errors */
+		rrd.error.clearError();
 	}
 
 	/**
@@ -491,6 +495,10 @@ public class rrd.command : rrd.object {
 
 		/* and stript the "dummy" ARGUMENT 0 again */
 		args.poll_head();
+		/* go over all the options and set their context */
+		foreach(var kv in options) {
+			kv.value.setContext(kv.key);
+		}
 	}
 
 	/**

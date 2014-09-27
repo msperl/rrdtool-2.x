@@ -38,6 +38,9 @@ public class rrd.rpn_stack {
 	 */
 	protected rrd.command cmd = null;
 
+	/* the context of this stack*/
+	protected string context = null;
+
 	/**
 	 * dump the stack
 	 */
@@ -60,11 +63,15 @@ public class rrd.rpn_stack {
 	 * @param command the command for which we run this
 	 * @return the result rrd.value object
 	 */
-	public rrd.value? parse(string rpn, rrd.command command)
+	public rrd.value? parse(string rpn,
+				rrd.command command,
+				string ctx
+		)
 	{
 		/* set the values */
 		rpn_str = rpn;
 		cmd = command;
+		context = ctx;
 
 		/* create the stack linked list*/
 		stack = new LinkedList<rrd.value>();
@@ -79,9 +86,9 @@ public class rrd.rpn_stack {
 
 		/* if the stack is not empty, then complain */
 		if (stack.size > 0) {
-			stderr.printf(
-				"Stack of %s is not empty after processing",
-				rpn_str
+			rrd.error.setErrorString(
+				"Stack of %s is not empty after processing"
+				.printf(rpn_str)
 				);
 			result = null;
 		}
@@ -104,11 +111,12 @@ public class rrd.rpn_stack {
 		}
 		/* first and last char must be the same */
 		/* this is mostly an inefficient workarround for vala 0.10 */
-		var first=field.substring(1,1);
+		var first=field.substring(0,1);
 		var last=field.substring(len-1,1);
 		if ( strcmp(first,last) != 0 ) {
 			return null;
 		}
+
 		/* first (and thus also last) char must be " or ' */
 		if (
 			(strcmp(first,"'") == 0 )
@@ -118,7 +126,7 @@ public class rrd.rpn_stack {
 			return (rrd.value_string) rrd.value.factory(
 				"rrdvalue_string",
 				field.substring(
-					2,
+					1,
 					field.length-2
 					)
 				);
@@ -152,7 +160,76 @@ public class rrd.rpn_stack {
 	 */
 	protected rrd.rpnop? parseOperator(string field)
 	{
-		return rrd.rpnop.factory(field);
+		return rrd.rpnop.factory(field,cmd.get_type().name());
+	}
+
+	protected rrd.value? parseLookupContext(string field)
+	{
+		var split = context.split(".");
+		for(var i=split.length;i>0;i--) {
+			string f=split[0];
+			for(var j=1;j<i;j++) {
+				f += "."+split[j];
+			}
+			f += "."+field;
+			if (strcmp(f,context)!=0) {
+				/* now try the lookup */
+				var entry = cmd.getOption(f);
+				if (entry != null) {
+					rrd.error.clearError();
+					return entry;
+				}
+			}
+		}
+		/* do the global lookup */
+		return cmd.getOption(field);
+	}
+
+	protected rrd.value? parseLookup(string field)
+	{
+		/* first try the "normal" lookup */
+		var entry = cmd.getOption(field);
+		if (entry != null) {
+			return entry;
+		}
+		/* split into two fields */
+		var split = field.split("?",2);
+		if (split.length==2) {
+			/* try to get the value alone */
+			entry = parseField(split[0]);
+			/* if it did not work, then try the second part */
+			if (entry == null){
+				rrd.error.clearError();
+				entry = parseField(split[1]);
+			}
+			if (entry != null) {
+				return entry;
+			}
+		}
+		/* now the context lookup */
+		if (strcmp(field.substring(0,1),"!")==0) {
+			rrd.error.clearError();
+			return parseLookupContext(field.substring(1));
+		}
+
+		return entry;
+	}
+
+	protected rrd.value? parseField(string field)
+	{
+		/* check if it is a string */
+		rrd.value entry = parseString(field);
+		/* else check if it is a number */
+		if ( entry == null)
+			entry = parseNumber(field);
+		/* try to get the value alone */
+		if ( entry == null)
+			entry = parseLookup(field);
+		/* else check if it is an operator */
+		if ( entry == null)
+			entry = parseOperator(field);
+		/* return the result */
+		return entry;
 	}
 
 	/**
@@ -164,24 +241,13 @@ public class rrd.rpn_stack {
 		/* iterate the split values */
 		foreach(var field in rpn_str.split(",")) {
 			/* try to identify the field */
-
-			/* check if it is an existing field */
-			rrd.value entry = cmd.getOption(field);
-			/* check if it is a string */
-			if ( entry == null)
-				entry = parseString(field);
-			/* else check if it is a number */
-			if ( entry == null)
-				entry = parseNumber(field);
-			/* else check if it is an operator */
-			if ( entry == null)
-				entry = parseOperator(field);
-			/* if we are still empty then return an error */
+			rrd.value entry = parseField(field);
+			/* if we are empty then return an error */
 			if (entry == null) {
-			rrd.error.setErrorString(
-				"RPN operator %s not found in rpn: %s"
-				.printf(field, rpn_str)
-				);
+				rrd.error.setErrorString(
+					"RPN operator %s not found in rpn: %s context %s"
+					.printf(field, rpn_str, context)
+					);
 				return false;
 			} else {
 				/* otherwise add it to the stack */
@@ -208,7 +274,7 @@ public class rrd.rpn_stack {
 			return null;
 		}
 		/* and return the value by calling getValue */
-		return top.getValue(cmd,this);
+		return top.getValue(cmd,false,this);
 	}
 
 	/**

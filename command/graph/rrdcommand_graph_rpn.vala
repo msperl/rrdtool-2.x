@@ -109,6 +109,7 @@ public class rrd.command_graph_rpn : rrd.argument {
 	 */
 	public override rrd.value? getValue(
 		rrd.command cmd,
+		bool skipcalc,
 		rrd.rpn_stack? stack = null)
 	{
 		/* otherwise take from rpn itself */
