@@ -34,18 +34,24 @@ clean:
 	rm -rf .build
 
 library: $(LIBSO)
-$(LIBSO): $(COBJ) $(VALAOBJ)
-	$(CC) -o $(LIBDIR)/$@ -shared $^ $(LDFLAGS)
+$(LIBSO): $(INCDIR)/$(LIBH) $(COBJ) $(VALAOBJ)
+	$(CC) -o $(LIBDIR)/$@ -shared $(COBJ) $(VALAOBJ) $(LDFLAGS)
 
-$(LIBH): .build $(VALASRC)
+$(LIBH): .build $(VALAC)
+
+$(INCDIR)/$(LIBH): $(VALASRC)
 	$(VALAC) $(VALAFLAGS) $(VALASHAREDFLAGS) --directory $(BUILDBASE) -C -H $(BUILDBASE)/$(LIBH) --vapi $(LIBVAPI) $(VALASRC)
 	cp $(BUILDBASE)/$(LIBH) $(INCDIR)
 	cp $(BUILDBASE)/$(LIBVAPI) $(VAPIDIR)
 
+$(BUILDBASE)/%.o: $(BUILDBASE)/%.c
+$(BUILDBASE)/%.c: %.vala
+	$(VALAC) $(VALAFLAGS) $(VALASHAREDFLAGS) --directory $(BUILDBASE) -C -H $(BUILDBASE)/$(LIBH) --vapi $(LIBVAPI) $(VALASRC)
+
 $(BUILDBASE):
 	mkdir -p $(BUILDBASE)
 
-$(PRELINK): $(LIBH)
+$(BUILDBASE)/prelink.c: $(LIBH)
 	grep -Eh "GType rrd_(command|value|rpnop)_.*_get_type" .build/$(LIBH) \
 	| sed "s/{/;/" \
 	| sort -u \

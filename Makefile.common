@@ -8,4 +8,11 @@ CFLAGSBASE=-I/root/thirdparty/include -g -fPIC
 PKG_CONFIG_PATH=/root/thirdparty/lib/pkgconfig
 
 PKG_CFLAGS=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags $(PKG_USED))
-PKG_LIBS=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs $(PKG_USED))
+PKG_LIBS_L=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-l $(PKG_USED))
+PKG_LIBS_LL=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-L $(PKG_USED))
+PKG_LIBS_OTHER=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-other $(PKG_USED))
+
+COMMA := ,
+PKG_LIB_RPATH=$(patsubst -L%, -Wl$(COMMA)-rpath -Wl$(COMMA)% , $(PKG_LIBS_LL))
+
+PKG_LIBS=${PKG_LIBS_OTHER} $(PKG_LIBS_LL) $(PKG_LIBS_L) ${PKG_LIB_RPATH}
