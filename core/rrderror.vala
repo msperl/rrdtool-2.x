@@ -55,8 +55,12 @@ public class rrd.error : Object {
 	 *
 	 * @return returns current error or null
 	 */
-	public static unowned rrd.error getError()
-	{ return (rrd.error*) _rrd_error.get(); }
+	public static unowned rrd.error? getError()
+	{
+		if (_rrd_error == null)
+			return null;
+		return (rrd.error*)_rrd_error.get();
+	}
 
 	/**
 	 * get the current error string
@@ -75,6 +79,14 @@ public class rrd.error : Object {
 	 */
 	public static void setErrorString(string errmsg)
 	{
+		/* set the string now - there is something wrong somewhere!
+		 * since it worked with vala 0.10
+		 */
+		if (_rrd_error == null) {
+			_rrd_error = new Private(
+				_rrd_error_DestroyNotify
+				);
+		}
 		rrd.error* err = new rrd.error.string(errmsg);
 		rrd.error.setError(err);
 	}
@@ -85,7 +97,7 @@ public class rrd.error : Object {
 	*/
 	public static void setError(rrd.error* error)
 	{
-		_rrd_error.set(error);
+		_rrd_error.replace(error);
 	}
 
 	/**
@@ -94,7 +106,7 @@ public class rrd.error : Object {
 	 */
 	public static void setErrorStringIfNull(string errmsg)
 	{
-		if(_rrd_error.get() == null) {
+		if ( (_rrd_error==null) || (_rrd_error.get() == null) ){
 			setErrorString(errmsg);
 		}
 	}
