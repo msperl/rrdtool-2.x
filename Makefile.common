@@ -1,0 +1,11 @@
+BUILDBASE=.build
+VALAC=/root/thirdparty/bin/valac
+VALAFLAGSBASE=--vapidir=/root/thirdparty/share/vala/vapi/ -X -I$(INCDIR)
+
+CC=gcc
+CFLAGSBASE=-I/root/thirdparty/include -g -fPIC
+
+PKG_CONFIG_PATH=/root/thirdparty/lib/pkgconfig
+
+PKG_CFLAGS=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags $(PKG_USED))
+PKG_LIBS=$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs $(PKG_USED))

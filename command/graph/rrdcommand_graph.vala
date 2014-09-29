@@ -112,12 +112,12 @@ public class rrd.command_graph : rrd.command {
 	 * the cairo image surface used for drawing
 	 * strangely these can't be protected or public
 	 */
-	private ImageSurface surface = null;
+//	private ImageSurface surface = null;
 	/**
 	 * the cairo context used for drawing
 	 * strangely these can't be protected or public
 	 */
-	private Context context = null;
+//	private Context context = null;
 
 	/**
 	 * creates a graph
@@ -133,17 +133,18 @@ public class rrd.command_graph : rrd.command {
 		int width = 600;
 		int height = 200;
 		/* now create the graph contexts */
+#if false
 		surface = new ImageSurface(
 			Cairo.Format.RGB24,
 			width,
 			height);
 		context = new Context(surface);
-
 		var imgfile = getOption("imagefile");
 		if (imgfile == null) {
 			return false;
 		}
 		surface.write_to_png(imgfile.to_string());
+#endif
 
 		/* and start processing */
 

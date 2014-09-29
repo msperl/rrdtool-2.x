@@ -1,11 +1,25 @@
-VALASRC=$(wildcard *.vala)
-VALACSRC=$(VALASRC:.vala=.c)
-CSRC=preload.c
-OBJ=$(VALACSRC:.c=.o) $(CSRC:.c=.o)
 EXE=rrdtool
 
-VALAC=valac
-VALAFLAGS=-g --vapidir vapi -X -Iinclude --pkg gee-1.0 --pkg rrd2_core --pkg rrd2_command -X -Llib -X -lrrd2_core -X -lrrd2_command -X -lm -X -Wl,-rpath=lib
+LIBDIR=./lib
+INCDIR=./include
+VAPIDIR=./vapi
+
+PKG_USED=gee-0.8 glib-2.0 cairo
+
+include Makefile.common
+
+VALAFLAGS=$(VALAFLAGSBASE)
+CFLAGS=$(CFLAGSBASE) -I$(INCDIR) $(PKG_CFLAGS)
+LDFLAGS=-g $(PKG_LIBS) -lrt -pthread -lm
+
+VALASRC=$(wildcard *.vala)
+VALACSRC=$(addprefix $(BUILDBASE)/,$(VALASRC:.vala=.c))
+VALAOBJ=$(VALACSRC:.c=.o)
+
+VALAFLAGS=$(VALAFLAGSBASE) --pkg gee-0.8 --vapidir=$(VAPIDIR) --pkg rrd2_core --pkg rrd2_command --pkg cairo
+#-X-Wl,-rpath=lib
+VALASHAREDFLAGS=-X -fPIC -X -shared
+
 
 BASEDIRS=vapi lib include
 
@@ -23,14 +37,14 @@ clean:  clean_core clean_command
 	rm -rf vapi lib include
 
 core::
-	$(MAKE) -C core
+	$(MAKE) -C core PKG_CONFIG_PATH=$(PKG_CONFIG_PATH)
 clean_core::
-	$(MAKE) -C core clean
+	$(MAKE) -C core clean PKG_CONFIG_PATH=$(PKG_CONFIG_PATH)
 
 command::
-	$(MAKE) -C command
+	$(MAKE) -C command PKG_CONFIG_PATH=$(PKG_CONFIG_PATH)
 clean_command::
-	$(MAKE) -C command clean
+	$(MAKE) -C command clean PKG_CONFIG_PATH=$(PKG_CONFIG_PATH)
 
 $(EXE): $(BASEDIRS) core command $(VALASRC)
 	$(VALAC) $(VALAFLAGS) $(VALASRC)

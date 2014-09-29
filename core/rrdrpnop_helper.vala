@@ -407,7 +407,7 @@ public abstract class rrd.rpnophelper_double : rrd.rpnophelper_value {
 	{
 		double val = num.getDouble();
 		double result = getValue_double(0, val);
-		return new rrd.value_number.double(result);
+		return new rrd.value_number.Double(result);
 	}
 	/**
 	 * implementation of getValue_Timestring
@@ -474,7 +474,7 @@ public abstract class rrd.rpnophelper_double_double : rrd.rpnophelper_value_valu
 		double val1 = obj1.getDouble();
 		double val2 = obj2.getDouble();
 		double result = getValue_double_double(0, val1, val2);
-		return new rrd.value_number.double(result);
+		return new rrd.value_number.Double(result);
 	}
 
 	/**
@@ -655,15 +655,14 @@ public abstract class rrd.rpnophelper_one_or_n_plus_one : rrd.rpnop
 			return null;
 
 		/* some more checks for an immediate number */
-		var t = val.get_type();
-		if (t is rrd.value_timestring) {
+		if (val is rrd.value_timestring) {
 			return getValueOverTimestring(
 				(rrd.value_timestring) val);
 		}
 		/* handle errors */
 		rrd.error.setErrorString(
 			"no support for type %s"
-			.printf(t.name()));
+			.printf(val.get_type().name()));
 		return null;
 	}
 
@@ -695,7 +694,7 @@ public abstract class rrd.rpnophelper_one_or_n_plus_one : rrd.rpnop
 	public virtual rrd.value? postprocessDouble()
 	{
 		return (count > 0) ?
-			new rrd.value_number.double(accumulate)
+			new rrd.value_number.Double(accumulate)
 			: null;
 	}
 

@@ -154,12 +154,12 @@ public class rrd.argument : rrd.value {
 		/* and if the value is of type rrd_argument,
 		 * then link also the subvalues
 		 */
-		var flag = val.isSubClassOf(
+		var flag = rrd.object.isSubClassOf(
 			val.get_type(),
 			"rrdargument");
 		if ( flag )  {
 			var opt=((rrd.argument)val).options;
-			foreach( var ent in opt) {
+			foreach( var ent in opt.entries) {
 				options.set(
 					key+"."+ent.key,
 					ent.value
@@ -175,7 +175,7 @@ public class rrd.argument : rrd.value {
 	 */
 	public void dump() {
 		stderr.printf("%s.dump():\n",get_type().name());
-		foreach(var arg in options) {
+		foreach(var arg in options.entries) {
 			stderr.printf("   Parsed arg: %s = %s\n",
 				arg.key,arg.value.to_string());
 		}
@@ -240,7 +240,7 @@ public class rrd.argument : rrd.value {
 		/* now set our options in the command context
 		 * - this should be a reference
 		 */
-		foreach(var kv in options) {
+		foreach(var kv in options.entries) {
 			string ctx=prefix+"."+kv.key;
 			command.setOption(
 				ctx,

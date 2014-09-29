@@ -118,9 +118,9 @@ public class rrd.command_graph_rpnop_gettextheight : rrd.rpnophelper_obj {
 	{
 		string str = val.to_string();
 		if (str.length>0) {
-			return new rrd.value_number.double(8);
+			return new rrd.value_number.Double(8);
 		} else {
-			return new rrd.value_number.double(0);
+			return new rrd.value_number.Double(0);
 		}
 	}
 }
@@ -141,9 +141,9 @@ public class rrd.command_graph_rpnop_gettextwidth : rrd.rpnophelper_obj {
 	{
 		string str = val.to_string();
 		if (str.length>0) {
-			return new rrd.value_number.double(8*str.length);
+			return new rrd.value_number.Double(8*str.length);
 		} else {
-			return new rrd.value_number.double(0);
+			return new rrd.value_number.Double(0);
 		}
 	}
 }

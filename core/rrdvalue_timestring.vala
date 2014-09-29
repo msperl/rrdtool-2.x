@@ -98,10 +98,10 @@ public class rrd.value_timestring : rrd.value {
 	{
 		/* boundry checks */
 		if (ts < start) {
-			return ts.NAN;
+			return double.NAN;
 		}
 		if (ts >= end) {
-			return ts.NAN;
+			return double.NAN;
 		}
 		/* otherwise let us calculate the index */
 		ts-=start;
@@ -182,7 +182,7 @@ public class rrd.value_timestring : rrd.value {
 		if (data == null) {
 			data = new double[steps];
 			for(int i = 0 ; i < steps ; i++) {
-				data[i] = data[i].NAN;
+				data[i] = double.NAN;
 			}
 		}
 		/* if  sizes do not match, then crete a copy */
@@ -193,7 +193,7 @@ public class rrd.value_timestring : rrd.value {
 			}
 			/* fill in with NAN */
 			for(int i=a_data.length;i<steps;i++) {
-				data[i] = data[i].NAN;
+				data[i] = double.NAN;
 			}
 		}
 	}

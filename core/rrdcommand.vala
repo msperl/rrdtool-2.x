@@ -171,7 +171,7 @@ public class rrd.command : rrd.object {
 	{
 		stderr.printf("Command: %s\n",get_type().name());
 		/* iterate all options */
-		foreach(var val in options) {
+		foreach(var val in options.entries) {
 			/* clear errors */
 			rrd.error.clearError();
 			/* get the value */
@@ -480,8 +480,10 @@ public class rrd.command : rrd.object {
 
 		/* now try to parse the remaining arguments*/
 		try {
-			/* and try to parse everything so far */
-			completeCommandOptions.parse(ref args_array);
+			/* and try to parse everything so far
+			 * using a stupid workarround
+			 */
+			completeCommandOptions.parse_strv(ref args_array);
 		} catch (OptionError e) {
 			rrd.error.setErrorString("parse.error: %s"
 						.printf(e.message)
@@ -496,7 +498,7 @@ public class rrd.command : rrd.object {
 		/* and stript the "dummy" ARGUMENT 0 again */
 		args.poll_head();
 		/* go over all the options and set their context */
-		foreach(var kv in options) {
+		foreach(var kv in options.entries) {
 			kv.value.setContext(kv.key);
 		}
 	}

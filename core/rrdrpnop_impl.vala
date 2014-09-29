@@ -144,13 +144,13 @@ public class rrd.rpnop_div : rrd.rpnophelper_double_double
 		 * not sure if other/different checks are needed
 		 */
 		if (val1.is_nan()) {
-			return val1.NAN;
+			return double.NAN;
 		}
 		if (val2.is_nan()) {
-			return val2.NAN;
+			return double.NAN;
 		}
 		if (val2 == 0) {
-			return val2.INFINITY;
+			return double.INFINITY;
 		}
 		/* return the result */
 		return val1/val2;
@@ -175,13 +175,13 @@ public class rrd.rpnop_mod : rrd.rpnophelper_double_double
 		 * not sure if other/different checks are needed
 		 */
 		if (val1.is_nan()) {
-			return val1.NAN;
+			return double.NAN;
 		}
 		if (val2.is_nan()) {
-			return val2.NAN;
+			return double.NAN;
 		}
 		if (val2 == 0) {
-			return val2.INFINITY;
+			return double.INFINITY;
 		}
 		/* return the result */
 		return val1 % val2;
@@ -210,7 +210,7 @@ public class rrd.rpnop_min : rrd.rpnophelper_one_or_n_plus_one
 	public override void processValue(rrd.value obj)
 	{
 		rrd.value_number num = (rrd.value_number) obj;
-		double val = (obj == null) ? accumulate.NAN : num.getDouble();
+		double val = (obj == null) ? double.NAN : num.getDouble();
 		if ( (count==0) || (val < accumulate) ) {
 			accumulate_obj = obj;
 			accumulate = val;
@@ -237,21 +237,21 @@ public class rrd.rpnop_avg : rrd.rpnophelper_one_or_n_plus_one
 
 	public override rrd.value? postprocessDouble()
 	{
-		double v = (count>0) ? accumulate/count : accumulate.NAN;
-		return new rrd.value_number.double(v);
+		double v = (count>0) ? accumulate/count : double.NAN;
+		return new rrd.value_number.Double(v);
 	}
 
 
 	public override void processValue(rrd.value obj)
 	{
 		rrd.value_number num = (rrd.value_number) obj;
-		accumulate += (obj == null) ? accumulate.NAN : num.getDouble();
+		accumulate += (obj == null) ? double.NAN : num.getDouble();
 	}
 
 	public override rrd.value? postprocessValue()
 	{
-		double v = (count>0) ? accumulate/count : accumulate.NAN;
-		return new rrd.value_number.double(v);
+		double v = (count>0) ? accumulate/count : double.NAN;
+		return new rrd.value_number.Double(v);
 	}
 
 }
@@ -278,7 +278,7 @@ public class rrd.rpnop_max : rrd.rpnophelper_one_or_n_plus_one
 	public override void processValue(rrd.value obj)
 	{
 		rrd.value_number num = (rrd.value_number) obj;
-		double val = (obj == null) ? accumulate.NAN : num.getDouble();
+		double val = (obj == null) ? double.NAN : num.getDouble();
 		if ( (count==0) || (val > accumulate) ) {
 			accumulate_obj = obj;
 			accumulate = val;

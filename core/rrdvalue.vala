@@ -244,7 +244,7 @@ public class rrd.value_number : rrd.value {
 	 * constructor that sets a boolean directly
 	 * @param flag the value to set
 	 */
-	public rrd.value_number.double(double a_value) {
+	public rrd.value_number.Double(double a_value) {
 		/* not sure if we should call the
 		 * constructor unnecessarily
 		 * Object(String:flag.to_string());
@@ -262,11 +262,11 @@ public class rrd.value_number : rrd.value {
 	{
 		/* if the String is set, then parse */
 		if (String == null) {
-			value = value.NAN;
+			value = double.NAN;
 		} else if (strcmp(String,"NaN") == 0)  {
-			value = value.NAN;
+			value = double.NAN;
 		} else if (strcmp(String,"INF") == 0)  {
-			value = value.INFINITY;
+			value = double.INFINITY;
 		} else {
 			/* parse the string */
 			string end = null;
@@ -277,7 +277,7 @@ public class rrd.value_number : rrd.value {
 					+"%s to number".printf(
 						String)
 					);
-					value = value.NAN;
+					value = double.NAN;
 			}
 		}
 	}
@@ -305,12 +305,12 @@ public class rrd.value_number : rrd.value {
 	{
 		double d = getDouble();
 		int i = (int) d;
-		if ((d - ((double) i)) > d.EPSILON) {
+		if ((d - ((double) i)) > double.EPSILON) {
 			rrd.error.setErrorString(
 				"the value %f is not a simple integer"
 				.printf(value)
 				);
-			return i.MIN;
+			return int.MIN;
 		}
 		return i;
 	}

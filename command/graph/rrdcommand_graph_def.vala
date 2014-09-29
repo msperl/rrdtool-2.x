@@ -152,9 +152,8 @@ public class rrd.command_graph_def : rrd.argument_cachedGetValue {
 			start,step,end,null);
 
 		/* fill in the timestring */
-		double dummy=0;
 		for (int i=0; i < result.getSteps(); i++) {
-			result.setData(i,dummy.NAN);
+			result.setData(i,double.NAN);
 		}
 
 		/* to avoid warnings */

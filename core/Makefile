@@ -1,10 +1,16 @@
 LIBNAME=rrd2_core
 
-BUILDBASE=.build
+LIBDIR=../lib
+INCDIR=../include
+VAPIDIR=../vapi
 
-CC=gcc
-CFLAGS=-g -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/gee-1.0 -Wall -g -fPIC
-LDFLAGS=-g -pthread -lgee -lgobject-2.0 -lgthread-2.0 -lrt -lglib-2.0 -lm
+PKG_USED=gee-0.8 glib-2.0
+
+include ../Makefile.common
+
+VALAFLAGS=$(VALAFLAGSBASE)
+CFLAGS=$(CFLAGSBASE) -I$(INCDIR) $(PKG_CFLAGS)
+LDFLAGS=-g $(PKG_LIBS) -lrt -pthread -lm
 
 VALASRC=$(wildcard *.vala)
 VALACSRC=$(addprefix $(BUILDBASE)/,$(VALASRC:.vala=.c))
@@ -15,16 +21,11 @@ PRELINK=$(BUILDBASE)/prelink.c
 CSRC=$(PRELINK)
 COBJ=$(CSRC:.c=.o)
 
-LIBDIR=../lib
-INCDIR=../include
-VAPIDIR=../vapi
-
 LIBSO=lib$(LIBNAME).so
 LIBH=$(LIBNAME).h
 LIBVAPI=$(LIBNAME).vapi
 
-VALAC=valac
-VALAFLAGS=-g --pkg gee-1.0
+VALAFLAGS=$(VALAFLAGSBASE) --pkg gee-0.8
 VALASHAREDFLAGS=-X -fPIC -X -shared
 
 all: library
@@ -37,7 +38,7 @@ $(LIBSO): $(COBJ) $(VALAOBJ)
 	$(CC) -o $(LIBDIR)/$@ -shared $^ $(LDFLAGS)
 
 $(LIBH): .build $(VALASRC)
-	$(VALAC) --directory $(BUILDBASE) -C -H $(BUILDBASE)/$(LIBH) --vapi $(LIBVAPI) $(VALAFLAGS) $(VALASHAREDFLAGS) $(VALASRC)
+	$(VALAC) $(VALAFLAGS) $(VALASHAREDFLAGS) --directory $(BUILDBASE) -C -H $(BUILDBASE)/$(LIBH) --vapi $(LIBVAPI) $(VALASRC)
 	cp $(BUILDBASE)/$(LIBH) $(INCDIR)
 	cp $(BUILDBASE)/$(LIBVAPI) $(VAPIDIR)
 
@@ -52,5 +53,3 @@ $(PRELINK): $(LIBH)
 	> $(PRELINK)
 
 .c.o:
-
-#$(BUILDBASE)%.o: %.c

@@ -141,14 +141,14 @@ public class rrd.rpn_stack {
 	{
 		double val = 0;
 		if (strcmp(field,"NAN")==0) {
-			return new rrd.value_number.double(val.NAN);
+			return new rrd.value_number.Double(double.NAN);
 		} else if (strcmp(field,"INF")==0) {
-			return new rrd.value_number.double(val.INFINITY);
+			return new rrd.value_number.Double(double.INFINITY);
 		} else {
 			string end = null;
 			val = field.to_double(out end);
 			if (strcmp(end,"") == 0) {
-				return new rrd.value_number.double(val);
+				return new rrd.value_number.Double(val);
 			}
 		}
 		return null;
