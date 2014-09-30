@@ -319,7 +319,6 @@ public class rrd.command : rrd.object {
 		 */
 		var command_options = getCommandOptions();
 		foreach (var entry in command_options) {
-			stderr.printf("XXX %s\n",entry.name);
 			if (hasOption(entry.name)) {
 				/* do nothing */
 			} else if (entry.is_positional) {
@@ -485,7 +484,9 @@ public class rrd.command : rrd.object {
 		/* dummy to make OptionContext.parse() happy */
 		args_array[i++] = "rrdool";
 		foreach(var arg in args) {
-			args_array[i++] = arg;
+			if (arg!=null) {
+				args_array[i++] = arg;
+			}
 		}
 
 		/* now try to parse the remaining arguments*/
@@ -503,7 +504,11 @@ public class rrd.command : rrd.object {
 		 * to have the info of what is left
 		 */
 		args.clear();
-		foreach(var arg in args_array) { args.add(arg); }
+		foreach(var arg in args_array) {
+			if (arg!=null) {
+				args.add(arg);
+			}
+		}
 
 		/* and stript the "dummy" ARGUMENT 0 again */
 		args.poll_head();

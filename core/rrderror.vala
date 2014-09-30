@@ -25,10 +25,7 @@
  */
 public class rrd.error : Object {
 	~rrderror()
-	{
-		stderr.printf("Destroy - %s\n",
-			getString());
-	}
+	{ ;	}
 
 	/**
 	 * private thread-local member variable for keeping

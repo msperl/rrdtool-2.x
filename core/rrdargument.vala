@@ -529,7 +529,7 @@ public class rrd.argument : rrd.value {
 	 * @return rrd.command object or null
 	 */
 	public static new rrd.argument? factory(
-		rrd.command command, string? cmdstr)
+		rrd.command command, string cmdstr)
 	{
 		/* split into a list */
 		var split = split_colon(cmdstr);
