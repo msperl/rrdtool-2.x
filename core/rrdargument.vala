@@ -269,7 +269,7 @@ public class rrd.argument : rrd.value {
 		var pos_args = new LinkedList<string>();
 
 		/* copy the debug from the command */
-		if (command.hasOption("debug")) {
+		if ((command != null) && (command.hasOption("debug"))) {
 			options.set("debug",command.getOption("debug"));
 		}
 
@@ -529,9 +529,8 @@ public class rrd.argument : rrd.value {
 	 * @return rrd.command object or null
 	 */
 	public static new rrd.argument? factory(
-		rrd.command command, string cmdstr)
+		rrd.command command, string? cmdstr)
 	{
-
 		/* split into a list */
 		var split = split_colon(cmdstr);
 		if (split == null) {

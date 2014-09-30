@@ -91,7 +91,7 @@ public class rrd.command : rrd.object {
 				options = new TreeMap<string,rrd.value>();
 				/* create the basic command options */
 				completeCommandOptions = new OptionContext (
-					"- rrdtool common arguments");
+					"- rrdtool tool ");
 				completeCommandOptions
 					.set_help_enabled(false);
 				completeCommandOptions
@@ -304,20 +304,31 @@ public class rrd.command : rrd.object {
 	 * parse arguments that have not been identified as options
 	 * @return false on failure
 	 */
-	protected virtual bool
-		parsePositionalArguments()
+	protected virtual bool parsePositionalArguments()
 	{
+		/* if we have help set, then no need to parse things - just set help */
+		bool help=((rrd.value_bool)getOption("help")).to_bool();
+		if (help) {
+			setHelpDescription();
+			return true;
+		}
+
 		/* walk the command options to fill in
 		 * the defined positional arguments from
 		 * the Command Options
 		 */
 		var command_options = getCommandOptions();
 		foreach (var entry in command_options) {
+			stderr.printf("XXX %s\n",entry.name);
 			if (hasOption(entry.name)) {
 				/* do nothing */
 			} else if (entry.is_positional) {
-				if (args.size>0) {
-					/* create a new value class */
+				string pos;
+				if (
+					(args.size > 0)
+					&& ( (pos = args.poll_head()) != null )
+					) {
+					/* create a new value class instance*/
 					var res = getClassForKey(
 						entry.name,
 						args.poll_head()
@@ -333,8 +344,7 @@ public class rrd.command : rrd.object {
 						);
 				} else {
 					rrd.error.setErrorString(
-						"Positional argument"
-						+ "for %s not given"
+						"Positional argument for %s not given"
 						.printf(entry.name)
 						);
 					return false;
@@ -574,7 +584,7 @@ public class rrd.command : rrd.object {
 	public override rrd.object? delegate()
 	{
 		/* if we are not of type rrdcommand then parse args */
-		string cname=this.get_type().name();
+		string cname=get_type().name();
 		if( strcmp(cname,"rrdcommand") != 0) {
 			/* parse the positional arguments */
 			if (! parsePositionalArguments()) {
@@ -587,23 +597,67 @@ public class rrd.command : rrd.object {
 
 		/* check if we got a command with one
 		 * of the additional args */
-		if (args.size <1) {
+		if (args.size < 2) {
+			/* handle help */
+			bool help=((rrd.value_bool)getOption("help")).to_bool();
+			if (help) {
+				setHelpDescription();
+				return this;
+			}
 			/* check if we got help */
 			rrd.error.setErrorString(
 				"Unexpected length"
 				+ " - need at least 1 arg as command!");
 			return null;
 		}
+
 		/* now get the command itself in lower case
 		 * - it is the first positional arg by now
 		 */
 		string command = args.poll_head().down();
+
 		/* and delegate to it using parent */
 		return (rrd.command) classFactory(
 			"rrdcommand_" + command,
 			"rrdcommand",
 			"parent",this
 			);
+	}
+
+    protected virtual Type baseTypeForSubCommands()
+	{
+		Type t = get_type();
+		Type cmd = Type.from_name("rrdcommand");
+		if (t == cmd) {
+			return t;
+		} else if (t.is_a(cmd)) {
+			return  Type.from_name("rrdargument");
+		}
+		/* otherwise unsupported */
+		return Type.INVALID;
+	}
+	/**
+	 * sets/extends the description of the command for help
+	 */
+	protected virtual void setHelpDescription()
+	{
+		string desc="Commands available:\n";
+		/* list commands that are possible */
+		Type t = baseTypeForSubCommands();
+        var pat = get_type().name()+"_";
+		var children = get_children(t);
+		foreach (var c in children) {
+			var cname=c.name();
+			if (strcmp(
+					cname.substring(0,pat.length),
+					pat
+					) == 0) {
+				desc += "  %s\n".printf(cname.substring(pat.length));
+			}
+		}
+
+		/* and set the description */
+		completeCommandOptions.set_description(desc);
 	}
 
 	/**

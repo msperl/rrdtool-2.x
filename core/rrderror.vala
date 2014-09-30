@@ -34,9 +34,7 @@ public class rrd.error : Object {
 	 * private thread-local member variable for keeping
 	 * error messages
 	 */
-	private static Private _rrd_error = new Private(
-		_rrd_error_DestroyNotify
-		);
+	private static Private _rrd_error;
 
 	/**
 	 * the destructor - not sure if this is "correct" code
@@ -79,14 +77,6 @@ public class rrd.error : Object {
 	 */
 	public static void setErrorString(string errmsg)
 	{
-		/* set the string now - there is something wrong somewhere!
-		 * since it worked with vala 0.10
-		 */
-		if (_rrd_error == null) {
-			_rrd_error = new Private(
-				_rrd_error_DestroyNotify
-				);
-		}
 		rrd.error* err = new rrd.error.string(errmsg);
 		rrd.error.setError(err);
 	}
@@ -97,7 +87,21 @@ public class rrd.error : Object {
 	*/
 	public static void setError(rrd.error* error)
 	{
-		_rrd_error.replace(error);
+		/* set the string now - there is something wrong somewhere!
+		 * since it worked with vala 0.10
+		 */
+		if (_rrd_error == null) {
+			_rrd_error = new Private(
+				_rrd_error_DestroyNotify
+				);
+			_rrd_error.set(null);
+		}
+		/* set or increment */
+		if(_rrd_error.get() == null) {
+			_rrd_error.set(error);
+		} else {
+			_rrd_error.replace(error);
+		}
 	}
 
 	/**

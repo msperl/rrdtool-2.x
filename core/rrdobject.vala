@@ -216,4 +216,16 @@ public class rrd.object : GLib.Object {
 		}
 		return false;
 	}
+	/**
+	 * get all childClasses of a certain type
+	 */
+	public static Gee.LinkedList<Type> get_children(Type t) {
+		var ret = new Gee.LinkedList<Type>();
+		var children = t.children();
+		foreach (var c in children) {
+			ret.add(c);
+			get_children(c).drain(ret);
+		}
+		return ret;
+	}
 }
