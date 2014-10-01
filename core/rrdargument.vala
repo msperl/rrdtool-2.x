@@ -213,7 +213,7 @@ public class rrd.argument : rrd.value {
 	 * which includes copying over data to global options
 	 * @param command the command to which we should link
 	 */
-	public void linkToCommand(rrd.command command) {
+	public void linkToCommand() {
 		/* copy debug from global context if it exists
 		 * and we have not set it locally */
 		if (! hasOption("debug")) {
@@ -540,12 +540,24 @@ public class rrd.argument : rrd.value {
 		/* and now create the Class object
 		 * - this has delegate implemented!!!
 		 */
-		return (rrd.argument) classFactory(
+		var ret = (rrd.argument) classFactory(
 				"rrdargument",
 				null,
 				"args",split,
 				"command", command
 			);
+		/* and link it */
+		if (ret != null) {
+			/* now link the argument hashes here
+			 * - mostly to make rpns work (easily)
+			 * note we can only do this here, as we would otherwise need
+			 * to do this in each "final" delegate implementation...
+			 * so we avoid it immediately
+			 */
+			ret.linkToCommand();
+		}
+		/* and return it */
+		return ret;
 	}
 
 }

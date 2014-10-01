@@ -21,6 +21,20 @@
 using Gee;
 
 /**
+ * protected key/value structure
+ */
+public class rrd.keyvalue {
+	public string key;
+	public rrd.value value;
+
+	public keyvalue(string k,rrd.value v)
+	{
+		key = k;
+		value = v;
+	}
+}
+
+/**
  * the rrd command object
  *
  * from this object all commands are derived
@@ -40,17 +54,18 @@ public class rrd.command : rrd.object {
 	public LinkedList<string> args { get; protected construct set; }
 
 	/**
-	 * the parsed positional argument objects in sequence
-	 */
-	protected LinkedList<rrd.argument> parsed_args;
-
-	/**
 	 * the parsed options as a map for quick access.
 	 * this also contains the options of arguments,
 	 * so that the parameters of those can also get
 	 * used for rpn calculations
 	 */
 	protected TreeMap<string,rrd.value> options;
+
+	/**
+	 * the parsed options as a list for sequencial searches
+	 * on the object types
+	 */
+	protected LinkedList<rrd.keyvalue> options_list;
 
 	/**
 	 * the created complete stack of command options
@@ -70,10 +85,10 @@ public class rrd.command : rrd.object {
 		if (parent != null) {
 			args =
 				parent.args;
-			parsed_args = (owned)
-				parent.parsed_args;
 			options = (owned)
 				parent.options;
+			options_list = (owned)
+				parent.options_list;
 			completeCommandOptions = (owned)
 				parent.completeCommandOptions;
 			parent = null;
@@ -87,8 +102,8 @@ public class rrd.command : rrd.object {
 					"construct %s without args set"
 					.printf(this.get_type().name()));
 			} else {
-				parsed_args = new LinkedList<rrd.argument>();
 				options = new TreeMap<string,rrd.value>();
+				options_list = new LinkedList<rrd.keyvalue>();
 				/* create the basic command options */
 				completeCommandOptions = new OptionContext (
 					"- rrdtool tool ");
@@ -137,6 +152,7 @@ public class rrd.command : rrd.object {
 	 */
 	public void setOption(string key, rrd.value value)
 	{
+		options_list.add(new rrd.keyvalue(key,value));
 		options.set(key,value);
 	}
 
@@ -358,13 +374,7 @@ public class rrd.command : rrd.object {
 			if (argclass==null) {
 				return false;
 			}
-			/* now link the argument hashes here
-			 * - mostly to make rpns work (easily)
-			 */
-			argclass.linkToCommand(this);
 
-			/* add to list of arguments */
-			parsed_args.add(argclass);
 		}
 		return true;
 	}
@@ -512,6 +522,7 @@ public class rrd.command : rrd.object {
 
 		/* and stript the "dummy" ARGUMENT 0 again */
 		args.poll_head();
+
 		/* go over all the options and set their context */
 		foreach(var kv in options.entries) {
 			kv.value.setContext(kv.key);
@@ -588,6 +599,9 @@ public class rrd.command : rrd.object {
 	 */
 	public override rrd.object? delegate()
 	{
+		/* handle help */
+		bool help=((rrd.value_bool)getOption("help")).to_bool();
+
 		/* if we are not of type rrdcommand then parse args */
 		string cname=get_type().name();
 		if( strcmp(cname,"rrdcommand") != 0) {
@@ -602,9 +616,7 @@ public class rrd.command : rrd.object {
 
 		/* check if we got a command with one
 		 * of the additional args */
-		if (args.size < 2) {
-			/* handle help */
-			bool help=((rrd.value_bool)getOption("help")).to_bool();
+		if (args.size < 1) {
 			if (help) {
 				setHelpDescription();
 				return this;
@@ -627,6 +639,7 @@ public class rrd.command : rrd.object {
 			"rrdcommand",
 			"parent",this
 			);
+
 	}
 
     protected virtual Type baseTypeForSubCommands()
