@@ -59,10 +59,16 @@ $(BUILDBASE):
 	mkdir -p $(BUILDBASE)
 
 
-test: $(EXE)
+test:: test1 test2
+
+test1:: $(EXE)
 	@rm -f core.*
 	./$(EXE) --verbose --debug graph --width 600 --height 300 \
 		--imagefile /tmp/test.png \
 		dEf:test=/tmp/test.rrd:field1:AVG \
 		'comment:abc\\:cde'
-
+test2:: $(EXE)
+	./$(EXE) graph --width 600 --height 300 \
+	--imagefile /tmp/test.png \
+	dEf:test=/tmp/test.rrd:field1:AVG \
+	tsgraph:id=xxx:title=test:yonleft=false
