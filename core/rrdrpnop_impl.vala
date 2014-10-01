@@ -210,7 +210,7 @@ public class rrd.rpnop_min : rrd.rpnophelper_one_or_n_plus_one
 	public override void processValue(rrd.value obj)
 	{
 		rrd.value_number num = (rrd.value_number) obj;
-		double val = (obj == null) ? double.NAN : num.getDouble();
+		double val = (obj == null) ? double.NAN : num.to_double();
 		if ( (count==0) || (val < accumulate) ) {
 			accumulate_obj = obj;
 			accumulate = val;
@@ -245,7 +245,7 @@ public class rrd.rpnop_avg : rrd.rpnophelper_one_or_n_plus_one
 	public override void processValue(rrd.value obj)
 	{
 		rrd.value_number num = (rrd.value_number) obj;
-		accumulate += (obj == null) ? double.NAN : num.getDouble();
+		accumulate += (obj == null) ? double.NAN : num.to_double();
 	}
 
 	public override rrd.value? postprocessValue()
@@ -278,7 +278,7 @@ public class rrd.rpnop_max : rrd.rpnophelper_one_or_n_plus_one
 	public override void processValue(rrd.value obj)
 	{
 		rrd.value_number num = (rrd.value_number) obj;
-		double val = (obj == null) ? double.NAN : num.getDouble();
+		double val = (obj == null) ? double.NAN : num.to_double();
 		if ( (count==0) || (val > accumulate) ) {
 			accumulate_obj = obj;
 			accumulate = val;
@@ -328,14 +328,14 @@ public class rrd.rpnop_timestring : rrd.rpnophelper_obj_obj_obj
 		var end = (rrd.value_number) end_v;
 
 		/* check that start<end */
-		if (start.getDouble() > end.getDouble()) {
+		if (start.to_double() > end.to_double()) {
 			rrd.error.setErrorString(
 				"start argument is > end"
 				);
 			return null;
 		}
 		/* check that start<end */
-		if (step.getDouble() <= 0) {
+		if (step.to_double() <= 0) {
 			rrd.error.setErrorString(
 				"step argument is <= 0"
 				);

@@ -136,9 +136,9 @@ public class rrd.value_timestring : rrd.value {
 		double[]? a_data = null
 		)
 	{
-		var v_start = a_start.getDouble();
-		var v_step = a_step.getDouble();
-		var v_end = a_end.getDouble();
+		var v_start = a_start.to_double();
+		var v_step = a_step.to_double();
+		var v_end = a_end.to_double();
 
 		rrd.value_timestring.init_double(
 			v_start, v_step, v_end,

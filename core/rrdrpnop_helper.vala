@@ -405,7 +405,7 @@ public abstract class rrd.rpnophelper_double : rrd.rpnophelper_value {
 	public override rrd.value? getValue_Number(
 			rrd.value_number num)
 	{
-		double val = num.getDouble();
+		double val = num.to_double();
 		double result = getValue_double(0, val);
 		return new rrd.value_number.Double(result);
 	}
@@ -471,8 +471,8 @@ public abstract class rrd.rpnophelper_double_double : rrd.rpnophelper_value_valu
 			rrd.value_number obj1,
 			rrd.value_number obj2)
 	{
-		double val1 = obj1.getDouble();
-		double val2 = obj2.getDouble();
+		double val1 = obj1.to_double();
+		double val2 = obj2.to_double();
 		double result = getValue_double_double(0, val1, val2);
 		return new rrd.value_number.Double(result);
 	}
@@ -488,7 +488,7 @@ public abstract class rrd.rpnophelper_double_double : rrd.rpnophelper_value_valu
 			rrd.value_number obj1,
 			rrd.value_timestring obj2)
 	{
-		double val1 = obj1.getDouble();
+		double val1 = obj1.to_double();
 
 		/* get size of resulting timestring */
 		double start=obj2.getStart();
@@ -525,7 +525,7 @@ public abstract class rrd.rpnophelper_double_double : rrd.rpnophelper_value_valu
 			rrd.value_timestring obj1,
 			rrd.value_number obj2)
 	{
-		double val2 = obj2.getDouble();
+		double val2 = obj2.to_double();
 
 		/* get size of resulting timestring */
 		double start=obj1.getStart();
@@ -741,7 +741,7 @@ public abstract class rrd.rpnophelper_one_or_n_plus_one : rrd.rpnop
 		rrd.command cmd,
 		bool skipcalc,
 		rrd.rpn_stack? stack = null) {
-		int steps = steps_v.getInteger();
+		int steps = steps_v.to_integer();
 		if (steps<=0) {
 			rrd.error.setErrorString(
 				"counter can not be less than 1: %i"

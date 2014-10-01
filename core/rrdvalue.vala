@@ -293,7 +293,7 @@ public class rrd.value_number : rrd.value {
 	 * virtual method returning the double value
 	 * @return the value itself
 	 */
-	public virtual double getDouble()
+	public virtual double to_double()
 	{ return value; }
 
 	/**
@@ -301,9 +301,9 @@ public class rrd.value_number : rrd.value {
 	 * sets error if not a simple integer
 	 * @return the integer value
 	 */
-	public virtual int getInteger()
+	public virtual int to_integer()
 	{
-		double d = getDouble();
+		double d = to_double();
 		int i = (int) d;
 		if ((d - ((double) i)) > double.EPSILON) {
 			rrd.error.setErrorString(
