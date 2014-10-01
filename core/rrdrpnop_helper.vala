@@ -752,9 +752,8 @@ public abstract class rrd.rpnophelper_one_or_n_plus_one : rrd.rpnop
 		for(int i=0 ; i<steps ; i++,count++) {
 			var obj = stack.pop();
 			if (obj != null) {
-				var obj1 = obj.getValue(cmd,skipcalc,stack);
-				stderr.printf("OBJ: %s = %s\n",obj.to_string(),(obj1!=null).to_string());
-				obj=obj1;
+				var objnew = obj.getValue(cmd,skipcalc,stack);
+				obj=objnew;
 			}
 			if (! skipcalc)
 				processValue(obj);
