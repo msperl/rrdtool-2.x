@@ -45,6 +45,7 @@ public class rrd.argument : rrd.value {
 	 * used for rpn calculations
 	 */
 	protected TreeMap<string,rrd.value> options;
+	protected TreeMap<string,string> unhandled_options;
 
 	/**
 	 * constructor
@@ -267,6 +268,8 @@ public class rrd.argument : rrd.value {
 	{
 		/* list of positional=unhandled args */
 		var pos_args = new LinkedList<string>();
+		/* set/clean existing unnhandled_options used for delegation */
+	    unhandled_options = new TreeMap<string,string>();
 
 		/* copy the debug from the command */
 		if ((command != null) && (command.hasOption("debug"))) {
@@ -292,8 +295,10 @@ public class rrd.argument : rrd.value {
 				/* so try to set it */
 				if (! setOption(key,value) ) {
 					/* if we can not,
-					 * then it is a positional arg */
+					 * then it is potentially a positional arg */
 					pos_args.add(arg);
+					/* we also add it to the unmapped key/values*/
+					unhandled_options.set(key,value);
 				}
 			}
 		}
@@ -474,7 +479,6 @@ public class rrd.argument : rrd.value {
 			"parent",this
 			);
 	}
-
 
 	/**
 	 * split_colon method, that also takes care of escaped colons
