@@ -4,7 +4,7 @@ LIBDIR=../lib
 INCDIR=../include
 VAPIDIR=../vapi
 
-PKG_USED=gee-0.8 glib-2.0
+PKG_USED=gee-0.8 glib-2.0 cairo
 
 include ../Makefile.common
 
