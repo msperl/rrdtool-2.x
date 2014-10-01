@@ -51,6 +51,9 @@ public class rrd.command_graph_def : rrd.argument_cachedGetValue {
 		},
 		{ "reduce", 0, "rrdvalue_string", "", false,
 		  "the reduction consolidation function to use"
+		},
+		{ "daemon", 0, "rrdvalue_string", null, false,
+		  "connect to daemon to fetch the data"
 		}
 	};
 
@@ -147,23 +150,43 @@ public class rrd.command_graph_def : rrd.argument_cachedGetValue {
 			(rrd.value_string) getOptionValue(
 				"reduce", cmd);
 
-		/* create the timestring */
-		var result = new rrd.value_timestring.init(
-			start,step,end,null);
-
-		/* fill in the timestring */
-		for (int i=0; i < result.getSteps(); i++) {
-			result.setData(i,double.NAN);
-		}
-
 		/* to avoid warnings */
 		rrdfile=null;
 		rrdfield=null;
 		cf=null;
 		reduce=null;
 
-		/* return result */
-		return result;
+		/* create the timestring */
+		var result = new rrd.value_timestring.init(
+			start,step,end,null);
 
+		/* fill in the timestring */
+		return fillTimeString(result);
+	}
+
+	protected virtual rrd.value_timestring?
+		fillTimeString(rrd.value_timestring result)
+	{
+		/* fill with nan */
+		for (int i=0; i < result.getSteps(); i++) {
+			result.setData(i,double.NAN);
+		}
+		return result;
+	}
+
+	public override rrd.object? delegate()
+	{
+		/* in case of a daemon argument use that implementation */
+		if (strcmp("rrdcommand_graph_def", get_type().name()) == 0) {
+			if (hasOption("daemon")) {
+				return classFactory(
+					this.get_type().name()+"_daemon",
+					"rrdargument",
+					"parent",this
+					);
+			}
+		}
+		/* otherwise use this implementation */
+		return this;
 	}
 }
