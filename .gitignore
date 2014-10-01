@@ -16,4 +16,7 @@
 
 # some other stuff
 rrdtool
-*.c
+.build/*.c
+.build
+include
+vapi
